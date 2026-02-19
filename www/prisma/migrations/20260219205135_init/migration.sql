@@ -1,47 +1,44 @@
-/*
-  Warnings:
-
-  - You are about to drop the `contractors` table. If the table is not empty, all the data it contains will be lost.
-  - A unique constraint covering the columns `[inn]` on the table `orgs` will be added. If there are existing duplicate values, this will fail.
-  - Added the required column `address` to the `orgs` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `director` to the `orgs` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `inn` to the `orgs` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `kpp` to the `orgs` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `status` to the `orgs` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `updated_at` to the `orgs` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `org_id` to the `users` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `phone` to the `users` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- CreateEnum
-CREATE TYPE "Activity" AS ENUM ('Active', 'Inactive', 'Closed');
+CREATE TYPE "Activity" AS ENUM ('Active', 'Inactive', 'Pending', 'Closed');
 
 -- CreateEnum
 CREATE TYPE "BookingStatus" AS ENUM ('Pending', 'Confirmed', 'Cancelled', 'Completed');
 
--- AlterTable
-ALTER TABLE "orgs" ADD COLUMN     "address" VARCHAR(255) NOT NULL,
-ADD COLUMN     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "director" VARCHAR(255) NOT NULL,
-ADD COLUMN     "inn" VARCHAR(12) NOT NULL,
-ADD COLUMN     "kpp" VARCHAR(9) NOT NULL,
-ADD COLUMN     "status" "Activity" NOT NULL,
-ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL;
+-- CreateTable
+CREATE TABLE "users" (
+    "id" SERIAL NOT NULL,
+    "login" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "phone" VARCHAR(11) NOT NULL,
+    "ext_id" TEXT NOT NULL,
+    "org_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
--- AlterTable
-ALTER TABLE "users" ADD COLUMN     "org_id" INTEGER NOT NULL,
-ADD COLUMN     "phone" TEXT NOT NULL;
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
 
--- DropTable
-DROP TABLE "contractors";
+-- CreateTable
+CREATE TABLE "orgs" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "inn" VARCHAR(12) NOT NULL,
+    "kpp" VARCHAR(9) NOT NULL,
+    "director" VARCHAR(255) NOT NULL,
+    "status" "Activity" NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "orgs_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "locations" (
     "id" SERIAL NOT NULL,
     "org_id" INTEGER NOT NULL,
-    "name" TEXT NOT NULL,
-    "address" TEXT NOT NULL,
-    "phone" TEXT,
+    "name" VARCHAR(255) NOT NULL,
+    "address" VARCHAR(255) NOT NULL,
+    "phone" VARCHAR(11),
     "status" "Activity" NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -53,11 +50,11 @@ CREATE TABLE "locations" (
 CREATE TABLE "bookings" (
     "id" SERIAL NOT NULL,
     "location_id" INTEGER NOT NULL,
-    "user_ext_id" TEXT NOT NULL,
+    "user_ext_id" VARCHAR(255) NOT NULL,
     "guests_count" INTEGER NOT NULL,
     "status" "BookingStatus" NOT NULL,
     "scheduled_at" TIMESTAMP(3) NOT NULL,
-    "comment" TEXT,
+    "comment" VARCHAR(255),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -88,6 +85,24 @@ CREATE TABLE "plans" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "users_login_key" ON "users"("login");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_ext_id_key" ON "users"("ext_id");
+
+-- CreateIndex
+CREATE INDEX "users_org_id_idx" ON "users"("org_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "orgs_name_key" ON "orgs"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "orgs_inn_key" ON "orgs"("inn");
+
+-- CreateIndex
+CREATE INDEX "orgs_status_idx" ON "orgs"("status");
+
+-- CreateIndex
 CREATE INDEX "locations_org_id_status_idx" ON "locations"("org_id", "status");
 
 -- CreateIndex
@@ -107,15 +122,6 @@ CREATE INDEX "licenses_expired_at_idx" ON "licenses"("expired_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "plans_name_key" ON "plans"("name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "orgs_inn_key" ON "orgs"("inn");
-
--- CreateIndex
-CREATE INDEX "orgs_status_idx" ON "orgs"("status");
-
--- CreateIndex
-CREATE INDEX "users_org_id_idx" ON "users"("org_id");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_org_id_fkey" FOREIGN KEY ("org_id") REFERENCES "orgs"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
