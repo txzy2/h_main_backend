@@ -1,9 +1,9 @@
 import {Processor, WorkerHost} from '@nestjs/bullmq';
 import {Job} from 'bullmq';
 
+import {AppLoggerService} from '@/common/logger/logger.service';
 import {LicensesService} from '@/licenses/licenses.service';
 import {LicenseWithOrg} from '@/types';
-import {AppLoggerService} from '@/common/logger/logger.service';
 
 @Processor('licenses')
 export class LicensesJob extends WorkerHost {
