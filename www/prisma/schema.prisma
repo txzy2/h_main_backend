@@ -10,6 +10,7 @@ datasource db {
 enum Activity {
   Active
   Inactive
+  Pending
   Closed
 }
 
@@ -26,7 +27,7 @@ model User {
   login String @unique
   name  String
 
-  phoneNumber String @map("phone")
+  phoneNumber String @map("phone") @db.VarChar(11)
 
   extId String       @unique @map("ext_id")
   org   Organization @relation(fields: [orgId], references: [id])
@@ -47,7 +48,6 @@ model Organization {
   kpp String @db.VarChar(9)
 
   director String @db.VarChar(255)
-  address  String @db.VarChar(255)
 
   status Activity
 
@@ -68,9 +68,9 @@ model Location {
   org   Organization @relation(fields: [orgId], references: [id])
   orgId Int          @map("org_id")
 
-  name    String
-  address String
-  phone   String?
+  name    String  @db.VarChar(255)
+  address String  @db.VarChar(255)
+  phone   String? @db.VarChar(11)
 
   status Activity
 
@@ -89,11 +89,11 @@ model Booking {
   location   Location @relation(fields: [locationId], references: [id])
   locationId Int      @map("location_id")
 
-  userExtId   String        @map("user_ext_id")
+  userExtId   String        @map("user_ext_id") @db.VarChar(255)
   guestsCount Int           @map("guests_count")
   status      BookingStatus
   scheduledAt DateTime      @map("scheduled_at")
-  comment     String?
+  comment     String?       @db.VarChar(255)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

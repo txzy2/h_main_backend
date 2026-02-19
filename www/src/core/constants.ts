@@ -1,3 +1,5 @@
+import {Plans} from '@prisma/client';
+
 /**
  * Redis ключи
  */
@@ -32,5 +34,7 @@ export const THROTTLE = {
  */
 export const BUSINESS_LIMITS = {
     MAX_ACTIVE_BOOKINGS_PER_USER: 5,
-    MAX_GUESTS_PER_BOOKING: 20
+    MAX_GUESTS_PER_BOOKING: 20,
+    LICENSE_EXPARATION_DAYS: 7 * 24 * 60 * 60 * 1000,
+    CREATE_LICENSE_EXPARATION_DAYS: 30 * 24 * 60 * 60 * 1000
 } as const;
