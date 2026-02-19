@@ -1,11 +1,11 @@
 import {ConflictException, Inject, Injectable} from '@nestjs/common';
 import {CreateOrgDto} from './dto/create-org.dto';
 import {UpdateOrgDto} from './dto/update-org.dto';
-import {ORGS_REPOSITORY, OrgsRepositoryInterface} from './orgs.repository';
+import {ORGS_REPOSITORY, type OrgsRepositoryInterface} from './orgs.repository';
 import {AuthUser} from '@/types';
 import {Organization, Prisma} from '@prisma/client';
 import {LicensesService} from '@/licenses/licenses.service';
-import {PLANS_REPOSITORY, PlansRepositoryInterface} from '@/plans/plans.repository';
+import {PLANS_REPOSITORY, type PlansRepositoryInterface} from '@/plans/plans.repository';
 import {UserService} from '@/user/user.service';
 import {AppLoggerService} from '@/common/logger/logger.service';
 import {PrismaService} from '@/prisma/prisma.service';

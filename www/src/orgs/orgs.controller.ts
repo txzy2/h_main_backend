@@ -2,7 +2,7 @@ import {ApiResponse} from '@/common';
 import {CurrentUser} from '@/common/decorators/current-user.decorator';
 import {AppLoggerService} from '@/common/logger/logger.service';
 import {AuthGuard} from '@/guards/auth.guard';
-import {AuthUser} from '@/types';
+import type {AuthUser} from '@/types';
 import {
     Body,
     Controller,

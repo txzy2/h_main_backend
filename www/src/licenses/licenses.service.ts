@@ -1,7 +1,7 @@
 import {LicenseWithOrg} from '@/types';
 import {Inject, Injectable} from '@nestjs/common';
 import {Prisma} from '@prisma/client';
-import {LICENSES_REPOSITORY, LicensesRepositoryInterface} from './licenses.repository';
+import {LICENSES_REPOSITORY, type LicensesRepositoryInterface} from './licenses.repository';
 
 @Injectable()
 export class LicensesService {

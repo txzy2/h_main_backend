@@ -2,7 +2,7 @@ import {AppLoggerService} from '@/common/logger/logger.service';
 import {ConflictException, Inject, Injectable} from '@nestjs/common';
 import {Prisma} from '@prisma/client';
 import {CreateUserDto} from './dto/create-user.dto';
-import {USERS_REPOSITORY, UsersRepositoryInterface} from './user.repository';
+import {USERS_REPOSITORY, type UsersRepositoryInterface} from './user.repository';
 
 @Injectable()
 export class UserService {
@@ -23,10 +23,7 @@ export class UserService {
      */
     public async createUser(user: CreateUserDto, tx?: Prisma.TransactionClient): Promise<void> {
         try {
-            await this.usersRepository.checkExistByParams(
-                {login: user.login, extId: user.extId},
-                tx
-            );
+            await this.checkExistUser({login: user.login, extId: user.extId}, tx);
             await this.usersRepository.create(user, tx);
         } catch (error) {
             this.logger.error(error);
@@ -40,10 +37,16 @@ export class UserService {
      *
      * @returns {Promise<void>}
      */
-    private async checkExistUser(params: Prisma.UserWhereInput): Promise<void> {
-        const user = await this.usersRepository.checkExistByParams({
-            OR: Object.entries(params).map(([key, value]) => ({[key]: value}))
-        });
+    private async checkExistUser(
+        params: Prisma.UserWhereInput,
+        tx?: Prisma.TransactionClient
+    ): Promise<void> {
+        const user = await this.usersRepository.checkExistByParams(
+            {
+                OR: Object.entries(params).map(([key, value]) => ({[key]: value}))
+            },
+            tx
+        );
 
         if (user) {
             throw new ConflictException({
