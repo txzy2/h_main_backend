@@ -1,9 +1,8 @@
-import {ConflictException, Inject, Injectable} from '@nestjs/common';
-import {USERS_REPOSITORY, UsersRepositoryInterface} from './user.repository';
-import {CreateUserDto} from './dto/create-user.dto';
 import {AppLoggerService} from '@/common/logger/logger.service';
-import {Prisma, PrismaClient, User} from '@prisma/client';
-import {PrismaService} from '@/prisma/prisma.service';
+import {ConflictException, Inject, Injectable} from '@nestjs/common';
+import {Prisma} from '@prisma/client';
+import {CreateUserDto} from './dto/create-user.dto';
+import {USERS_REPOSITORY, UsersRepositoryInterface} from './user.repository';
 
 @Injectable()
 export class UserService {

@@ -1,6 +1,6 @@
 import {PrismaService} from '@/prisma/prisma.service';
 import {Injectable} from '@nestjs/common';
-import {Activity, Organization, Prisma, PrismaClient} from '@prisma/client';
+import {Activity, Organization, Prisma} from '@prisma/client';
 import {CreateOrgDto} from './dto/create-org.dto';
 
 export const ORGS_REPOSITORY = Symbol('ORGS_REPOSITORY');

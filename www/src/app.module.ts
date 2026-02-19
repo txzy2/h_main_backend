@@ -1,17 +1,17 @@
+import {ExpressAdapter} from '@bull-board/express';
+import {BullBoardModule} from '@bull-board/nestjs';
 import {BullModule} from '@nestjs/bullmq';
 import {ArgumentsHost, Catch, ExceptionFilter, HttpException, Module} from '@nestjs/common';
 import {ConfigModule, ConfigService} from '@nestjs/config';
 import {ScheduleModule} from '@nestjs/schedule';
-import {ExpressAdapter} from '@bull-board/express';
-import {BullBoardModule} from '@bull-board/nestjs';
 import {Response} from 'express';
 
+import {LoggerModule} from './common/logger/logger.module';
 import {LicensesJobModule} from './jobs/licenses/licenses.job.module';
 import {LicensesModule} from './licenses/licenses.module';
 import {OrgsModule} from './orgs/orgs.module';
 import {PrismaModule} from './prisma/prisma.module';
 import {RedisModule} from './redis/redis.module';
-import {LoggerModule} from './common/logger/logger.module';
 
 import {BULL_BOARD_FEATURES} from './core/bull-board/futures';
 import conf, {validationSchema} from './core/conf';
@@ -19,7 +19,7 @@ import conf, {validationSchema} from './core/conf';
 import {AppController} from './app.controller';
 import {AppService} from './app.service';
 import {CommonHttpModule} from './common/http/http.module';
-import { UserModule } from './user/user.module';
+import {UserModule} from './user/user.module';
 
 @Module({
     imports: [

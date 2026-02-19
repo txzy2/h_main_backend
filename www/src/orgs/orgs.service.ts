@@ -45,25 +45,24 @@ export class OrgsService {
             throw new ConflictException('Выбранный тарифный план не найден');
         }
 
-        return this.prisma.runTransaction(async tx => {
-            const newOrg = await this.orgsRepository.create(orgData, tx);
-            await this.licensesService.registrateLicense(newOrg.id, plan.id, tx);
+        const newOrg = await this.prisma.runTransaction(async tx => {
+            const org = await this.orgsRepository.create(orgData, tx);
+            await this.licensesService.registrateLicense(org.id, plan.id, tx);
             await this.userService.createUser(
                 {
                     name: user.name,
                     login: user.login,
                     extId: user.sub,
-                    orgId: newOrg.id,
+                    orgId: org.id,
                     phoneNumber: orgData.phone_number
                 },
                 tx
             );
-
-            this.logger.log(
-                `Организация ${newOrg.name} зарегистрирована. DATA: ${JSON.stringify(newOrg)}`
-            );
-            return newOrg;
+            return org;
         });
+        this.logger.log(`Организация ${newOrg.name} зарегистрирована`);
+
+        return newOrg;
     }
 
     /**

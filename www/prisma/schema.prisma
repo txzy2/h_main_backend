@@ -72,6 +72,8 @@ model Location {
   address String  @db.VarChar(255)
   phone   String? @db.VarChar(11)
 
+  activePlaces Int @map("active_places") @db.Integer
+
   status Activity
 
   bookings Booking[]

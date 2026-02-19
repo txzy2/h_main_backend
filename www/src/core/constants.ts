@@ -1,5 +1,3 @@
-import {Plans} from '@prisma/client';
-
 /**
  * Redis ключи
  */

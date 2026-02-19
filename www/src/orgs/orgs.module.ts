@@ -1,11 +1,11 @@
+import {LicensesModule} from '@/licenses/licenses.module';
+import {PLANS_REPOSITORY, PlansRepository} from '@/plans/plans.repository';
+import {PrismaService} from '@/prisma/prisma.service';
+import {UserModule} from '@/user/user.module';
 import {Module} from '@nestjs/common';
-import {OrgsService} from './orgs.service';
 import {OrgsController} from './orgs.controller';
 import {ORGS_REPOSITORY, OrgsRepository} from './orgs.repository';
-import {PrismaService} from '@/prisma/prisma.service';
-import {PLANS_REPOSITORY, PlansRepository} from '@/plans/plans.repository';
-import {UserModule} from '@/user/user.module';
-import {LicensesModule} from '@/licenses/licenses.module';
+import {OrgsService} from './orgs.service';
 
 @Module({
     imports: [UserModule, LicensesModule],

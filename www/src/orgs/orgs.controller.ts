@@ -1,27 +1,27 @@
+import {ApiResponse} from '@/common';
+import {CurrentUser} from '@/common/decorators/current-user.decorator';
+import {AppLoggerService} from '@/common/logger/logger.service';
+import {AuthGuard} from '@/guards/auth.guard';
+import {AuthUser} from '@/types';
 import {
-    Controller,
-    Get,
-    Post,
     Body,
-    Patch,
-    Param,
+    Controller,
     Delete,
-    HttpStatus,
+    Get,
     HttpCode,
+    HttpStatus,
+    Param,
+    Patch,
+    Post,
     UseGuards
 } from '@nestjs/common';
-import {OrgsService} from './orgs.service';
-import {CreateOrgDto} from './dto/create-org.dto';
-import {UpdateOrgDto} from './dto/update-org.dto';
-import {ApiResponse} from '@/common';
-import {AuthGuard} from '@/guards/auth.guard';
-import {CurrentUser} from '@/common/decorators/current-user.decorator';
-import {AuthUser} from '@/types';
-import {AppLoggerService} from '@/common/logger/logger.service';
 import {ApiBearerAuth, ApiOperation, ApiTags} from '@nestjs/swagger';
 import {ApiResponse as SwaggerResponse} from '@nestjs/swagger/dist/decorators/api-response.decorator';
 import {Organization} from '@prisma/client';
 import {SUCCESS_CREATED_ORG} from './constants/response.constants';
+import {CreateOrgDto} from './dto/create-org.dto';
+import {UpdateOrgDto} from './dto/update-org.dto';
+import {OrgsService} from './orgs.service';
 
 @ApiTags('Организации')
 @ApiBearerAuth('JWT-auth')

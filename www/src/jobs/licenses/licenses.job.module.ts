@@ -1,8 +1,8 @@
-import {Module} from '@nestjs/common';
+import {LicensesModule} from '@/licenses/licenses.module';
 import {BullModule} from '@nestjs/bullmq';
+import {Module} from '@nestjs/common';
 import {LicensesJob} from './licenses.job';
 import {LicensesScheduler} from './licenses.scheduler';
-import {LicensesModule} from '@/licenses/licenses.module';
 
 @Module({
     imports: [BullModule.registerQueue({name: 'licenses'}), LicensesModule],
