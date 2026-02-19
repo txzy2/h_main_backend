@@ -1,0 +1,4 @@
+dbdata/
+redis_data/
+
+.env

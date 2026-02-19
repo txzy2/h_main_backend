@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Activity {
+  Active
+  Inactive
+  Closed
+}
+
+enum BookingStatus {
+  Pending
+  Confirmed
+  Cancelled
+  Completed
+}
+
+model User {
+  id Int @id @default(autoincrement())
+
+  login String @unique
+  name  String
+
+  phoneNumber String @map("phone")
+
+  extId String       @unique @map("ext_id")
+  org   Organization @relation(fields: [orgId], references: [id])
+  orgId Int          @map("org_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  @@index([orgId])
+  @@map("users")
+}
+
+model Organization {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  inn String @unique @db.VarChar(12)
+  kpp String @db.VarChar(9)
+
+  director String @db.VarChar(255)
+  address  String @db.VarChar(255)
+
+  status Activity
+
+  licenses  License[]
+  locations Location[]
+  users     User[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("orgs")
+}
+
+model Location {
+  id Int @id @default(autoincrement())
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  orgId Int          @map("org_id")
+
+  name    String
+  address String
+  phone   String?
+
+  status Activity
+
+  bookings Booking[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([orgId, status])
+  @@map("locations")
+}
+
+model Booking {
+  id Int @id @default(autoincrement())
+
+  location   Location @relation(fields: [locationId], references: [id])
+  locationId Int      @map("location_id")
+
+  userExtId   String        @map("user_ext_id")
+  guestsCount Int           @map("guests_count")
+  status      BookingStatus
+  scheduledAt DateTime      @map("scheduled_at")
+  comment     String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // locationId + scheduledAt — расписание броней по точке за период
+  @@index([locationId, scheduledAt])
+  // userExtId — все брони конкретного пользователя
+  @@index([userExtId])
+  // status + scheduledAt — выборка pending/confirmed броней на сегодня/завтра
+  @@index([status, scheduledAt])
+  @@map("bookings")
+}
+
+model License {
+  id Int @id @default(autoincrement())
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  orgId Int          @map("org_id")
+
+  plan   Plans @relation(fields: [planId], references: [id])
+  planId Int   @map("plan_id")
+
+  active Activity
+
+  createdAt DateTime @default(now()) @map("created_at")
+  expiredAt DateTime @map("expired_at")
+
+  // orgId + active — получить активную лицензию организации
+  @@index([orgId, active])
+  // expiredAt — джоб который ищет истекающие лицензии
+  @@index([expiredAt])
+  @@map("licenses")
+}
+
+model Plans {
+  id Int @id @default(autoincrement())
+
+  name         String @unique @db.VarChar(255)
+  maxLocations Int    @map("max_locations")
+  price        Int
+  description  String @db.VarChar(255)
+
+  licenses License[]
+
+  @@map("plans")
+}
+
+// model Contractors {
+//   id Int @id @default(autoincrement())
+
+//   user   User @relation(fields: [userId], references: [id])
+//   userId Int  @map("user_id")
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @default(now()) @map("updated_at")
+
+//   @@map("contractors")
+// }
