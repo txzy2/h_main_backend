@@ -6,6 +6,7 @@ export const PLANS_REPOSITORY = Symbol('PLANS_REPOSITORY');
 
 export interface PlansRepositoryInterface {
     findByName(name: string): Promise<Plans | null>;
+    getPlans(): Promise<Plans[]>;
 }
 
 @Injectable()
@@ -21,5 +22,14 @@ export class PlansRepository implements PlansRepositoryInterface {
      */
     async findByName(name: string): Promise<Plans | null> {
         return this.prisma.plans.findUnique({where: {name}});
+    }
+
+    /**
+     * getPlans - Получение всех планов
+     *
+     * @returns {Promise<Plans[]>}
+     */
+    async getPlans(): Promise<Plans[]> {
+        return this.prisma.plans.findMany();
     }
 }

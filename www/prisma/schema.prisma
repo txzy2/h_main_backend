@@ -50,6 +50,7 @@ model Organization {
   director String @db.VarChar(255)
 
   status Activity
+  //TODO: Добавить хранение иконок организации
 
   licenses  License[]
   locations Location[]
@@ -73,6 +74,7 @@ model Location {
   phone   String? @db.VarChar(11)
 
   activePlaces Int @map("active_places") @db.Integer
+  //TODO: Сделать карту заведения
 
   status Activity
 

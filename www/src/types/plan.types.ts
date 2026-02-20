@@ -1,5 +1,5 @@
 export enum PlanTier {
-    Basic = 'basic',
-    Medium = 'medium',
-    Pro = 'pro'
+    Basic = 'Basic',
+    Medium = 'Medium',
+    Pro = 'Pro'
 }

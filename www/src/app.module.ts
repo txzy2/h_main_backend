@@ -20,6 +20,7 @@ import {AppController} from './app.controller';
 import {AppService} from './app.service';
 import {CommonHttpModule} from './common/http/http.module';
 import {UserModule} from './user/user.module';
+import {PlansModule} from './plans/plans.module';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import {UserModule} from './user/user.module';
         }),
         PrismaModule,
         OrgsModule,
+        PlansModule,
         RedisModule,
         LoggerModule,
         LicensesModule,
