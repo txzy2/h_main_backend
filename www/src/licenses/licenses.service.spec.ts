@@ -2,9 +2,8 @@ import {Test, TestingModule} from '@nestjs/testing';
 import {LicensesService} from './licenses.service';
 import {LICENSES_REPOSITORY} from './licenses.repository';
 import {mockLicensesRepository} from '@/__mocks__/license.repository.mock';
-import {mockCreateLicnseDto, mockExpiredLicnseDto, mockOrganization} from '@/__mocks__';
+import {mockExpiredLicnseDto} from '@/__mocks__';
 
-// licenses.service.spec.ts
 describe('LicensesService', () => {
     let service: LicensesService;
 

@@ -24,4 +24,12 @@ export class CommonHttpService {
 
         return data;
     }
+
+    public async patch<T>(url: string, body: unknown, token?: string): Promise<T> {
+        const {data} = await this.httpService.axiosRef.patch<T>(url, body, {
+            headers: token ? {Authorization: `Bearer ${token}`} : {}
+        });
+
+        return data;
+    }
 }
