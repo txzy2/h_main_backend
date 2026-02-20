@@ -3,7 +3,6 @@ import {Test, TestingModule} from '@nestjs/testing';
 import {ConflictException} from '@nestjs/common';
 import {OrgsService} from './orgs.service';
 import {ORGS_REPOSITORY} from './orgs.repository';
-import {PLANS_REPOSITORY} from '@/plans/plans.repository';
 import {LicensesService} from '@/licenses/licenses.service';
 import {UserService} from '@/user/user.service';
 import {PrismaService} from '@/prisma/prisma.service';
@@ -15,11 +14,12 @@ import {
     mockOrganization,
     mockOrgsRepository,
     mockPlan,
-    mockPlansRepository,
     mockPrismaService
 } from '@/__mocks__';
 import {mockLicensesService} from '@/__mocks__/licenses.service.mock';
 import {mockUserService} from '@/__mocks__/user.service.mock';
+import {PlansService} from '@/plans/plans.service';
+import {mockPlansService} from '@/__mocks__/plans.service.mock';
 
 describe('OrgsService', () => {
     let service: OrgsService;
@@ -29,10 +29,10 @@ describe('OrgsService', () => {
             providers: [
                 OrgsService,
                 {provide: ORGS_REPOSITORY, useValue: mockOrgsRepository},
-                {provide: PLANS_REPOSITORY, useValue: mockPlansRepository},
                 {provide: LicensesService, useValue: mockLicensesService},
                 {provide: UserService, useValue: mockUserService},
                 {provide: PrismaService, useValue: mockPrismaService},
+                {provide: PlansService, useValue: mockPlansService},
                 {provide: AppLoggerService, useValue: mockLoggerService}
             ]
         }).compile();
@@ -45,7 +45,7 @@ describe('OrgsService', () => {
     describe('create', () => {
         it('успешно создаёт организацию', async () => {
             mockOrgsRepository.checkExistByParams.mockResolvedValue(null);
-            mockPlansRepository.findByName.mockResolvedValue(mockPlan);
+            mockPlansService.getByName.mockResolvedValue(mockPlan);
             mockOrgsRepository.create.mockResolvedValue(mockOrganization);
             mockLicensesService.registrateLicense.mockResolvedValue(true);
             mockUserService.createUser.mockResolvedValue(undefined);
@@ -74,7 +74,9 @@ describe('OrgsService', () => {
 
         it('бросает ConflictException если план не найден', async () => {
             mockOrgsRepository.checkExistByParams.mockResolvedValue(null);
-            mockPlansRepository.findByName.mockResolvedValue(null);
+            mockPlansService.getByName.mockRejectedValue(
+                new ConflictException('Выбранный тарифный план не найден')
+            );
 
             await expect(
                 service.create(mockCreateOrgDto as any, mockAuthUser as any)
@@ -85,7 +87,7 @@ describe('OrgsService', () => {
 
         it('откатывает транзакцию если registrateLicense упал', async () => {
             mockOrgsRepository.checkExistByParams.mockResolvedValue(null);
-            mockPlansRepository.findByName.mockResolvedValue(mockPlan);
+            mockPlansService.getByName.mockResolvedValue(mockPlan);
             mockOrgsRepository.create.mockResolvedValue(mockOrganization);
             mockLicensesService.registrateLicense.mockRejectedValue(new Error('DB error'));
 
@@ -96,7 +98,7 @@ describe('OrgsService', () => {
 
         it('откатывает транзакцию если createUser упал', async () => {
             mockOrgsRepository.checkExistByParams.mockResolvedValue(null);
-            mockPlansRepository.findByName.mockResolvedValue(mockPlan);
+            mockPlansService.getByName.mockResolvedValue(mockPlan);
             mockOrgsRepository.create.mockResolvedValue(mockOrganization);
             mockLicensesService.registrateLicense.mockResolvedValue(true);
             mockUserService.createUser.mockRejectedValue(new Error('User error'));

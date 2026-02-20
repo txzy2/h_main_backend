@@ -9,15 +9,16 @@ import {PLANS_REPOSITORY, type PlansRepositoryInterface} from '@/plans/plans.rep
 import {UserService} from '@/user/user.service';
 import {AppLoggerService} from '@/common/logger/logger.service';
 import {PrismaService} from '@/prisma/prisma.service';
+import {PlansService} from '@/plans/plans.service';
 
 @Injectable()
 export class OrgsService {
     public constructor(
         @Inject(ORGS_REPOSITORY) private readonly orgsRepository: OrgsRepositoryInterface,
-        @Inject(PLANS_REPOSITORY) private readonly plansRepository: PlansRepositoryInterface,
         private readonly userService: UserService,
         private readonly licensesService: LicensesService,
         private readonly logger: AppLoggerService,
+        private readonly plansService: PlansService,
         private readonly prisma: PrismaService
     ) {
         this.logger.setContext(OrgsService.name);
@@ -37,14 +38,7 @@ export class OrgsService {
             inn: orgData.inn
         });
 
-        const plan = await this.plansRepository.findByName(orgData.plan);
-        if (!plan) {
-            this.logger.error(
-                `Тарифный план ${orgData.plan} не найден. DATA: ${JSON.stringify(orgData)}`
-            );
-            throw new ConflictException('Выбранный тарифный план не найден');
-        }
-
+        const plan = await this.plansService.getByName(orgData.plan);
         const newOrg = await this.prisma.runTransaction(async tx => {
             const org = await this.orgsRepository.create(orgData, tx);
             await this.licensesService.registrateLicense(org.id, plan.id, tx);
