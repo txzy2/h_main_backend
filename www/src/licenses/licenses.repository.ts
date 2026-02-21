@@ -51,7 +51,7 @@ export class LicensesRepository implements LicensesRepositoryInterface {
             data: {
                 orgId,
                 planId,
-                active: Activity.Active,
+                active: Activity.Pending,
                 expiredAt: new Date(Date.now() + BUSINESS_LIMITS.CREATE_LICENSE_EXPARATION_DAYS)
             }
         }));

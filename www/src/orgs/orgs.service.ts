@@ -13,6 +13,7 @@ import {ApiErrors} from '@/common/errors/api-errors';
 import {CreateLocationDto, ReqLocation} from './dto/create-location.dto';
 
 import * as crypto from 'crypto';
+import {getErrorMessage} from '@/common/errors/get-error-message';
 
 @Injectable()
 export class OrgsService {
@@ -36,40 +37,37 @@ export class OrgsService {
      * @returns {Promise<Organization>}
      */
     public async create(orgData: CreateOrgDto, user: AuthUser): Promise<Organization> {
-        if (
-            await this.checkExistOrg({
-                OR: [{inn: orgData.inn}, {kpp: orgData.kpp}, {name: orgData.name}]
-            })
-        ) {
-            throw new ConflictException({
-                message: ApiErrors.ORG_IS_ALREADY_EXIST,
-                data: {
-                    name: orgData.name,
-                    inn: orgData.inn,
-                    kpp: orgData.kpp,
-                    director: orgData.director
-                }
-            });
-        }
-
         const plan = await this.plansService.getByName(orgData.plan);
-        const newOrg = await this.prisma.runTransaction(async tx => {
-            const org = await this.orgsRepository.create(orgData, tx);
-            await this.licensesService.registrateLicense(org.id, plan.id, tx);
-            await this.userService.createUser(
-                {
-                    name: user.name,
-                    login: user.login,
-                    extId: user.sub,
-                    orgId: org.id,
-                    phoneNumber: orgData.phone_number
-                },
-                tx
-            );
-            return org;
-        });
 
-        return newOrg;
+        try {
+            return await this.prisma.$transaction(async tx => {
+                const org = await this.orgsRepository.create(orgData, tx);
+                await this.licensesService.registrateLicense(org.id, plan.id, tx);
+                await this.userService.createUser(
+                    {
+                        name: user.name,
+                        login: user.login,
+                        extId: user.sub,
+                        orgId: org.id,
+                        phoneNumber: orgData.phone_number
+                    },
+                    tx
+                );
+
+                return org;
+            });
+        } catch (e: unknown) {
+            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+                throw new ConflictException(ApiErrors.ORG_IS_ALREADY_EXIST);
+            }
+
+            if (e instanceof ConflictException) {
+                throw e;
+            }
+
+            this.logger.error('Org creation failed', getErrorMessage(e));
+            throw new InternalServerErrorException(ApiErrors.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -83,12 +81,7 @@ export class OrgsService {
      */
     public async getOrgInfo(user: AuthUser): Promise<OrgResponseDto> {
         const existUser = await this.userService.getUserByParam({extId: user.sub});
-        const orgData = await this.orgsRepository.findOrgInfoById(existUser.orgId);
-        if (!orgData || orgData.status !== Activity.Active) {
-            throw new ConflictException(ApiErrors.ORG_NOT_FOUND_OR_INACTIVE);
-        }
-
-        return orgData;
+        return this.getActiveOrg(existUser.orgId);
     }
 
     /**
@@ -106,17 +99,20 @@ export class OrgsService {
     }
 
     /**
-     * addLocationForOrg - Добавляет локации для организации.
-     *
-     * @param {CreateLocationDto} data - DTO с идентификатором организации и массивом локаций
-     * @param {AuthUser} user - Авторизованный пользователь
-     *
-     * @throws {ConflictException} Если локация с таким названием и телефоном уже существует
-     * @throws {InternalServerErrorException} Если произошла ошибка при создании локаций
-     *
-     * @returns {Promise<void>}
-     *
-     */
+    * addLocationForOrg - Добавляет локации для организации.
+    *
+    * @param {CreateLocationDto} data - DTO с идентификатором организации и массивом локаций
+    * @param {AuthUser} user - Авторизованный пользователь
+    *
+    * @throws {ConflictException} - `USER_NOT_FOUND` — если пользователь не принадлежит организации
+    * @throws {ConflictException} `ORG_STATUS_IS_PENDING` — если организация на проверке
+    * @throws {ConflictException} `ORG_NOT_FOUND_OR_INACTIVE` — если организация не найдена или неактивна
+
+    * @throws {InternalServerErrorException} Если произошла ошибка при создании локаций
+    *
+    * @returns {Promise<void>}
+    *
+    */
     public async addLocationForOrg(data: CreateLocationDto, user: AuthUser): Promise<void> {
         if (
             !(await this.userService.checkExistUser({
@@ -127,38 +123,41 @@ export class OrgsService {
             throw new ConflictException(ApiErrors.USER_NOT_FOUND);
         }
 
-        if (!(await this.checkExistOrg({id: data.org_id}))) {
+        await this.getActiveOrg(data.org_id);
+
+        try {
+            const mapped = data.locations.map(loc => ({
+                ...loc,
+                uniqueHash: this.generateUniqueLocationHash(data.org_id, loc)
+            }));
+
+            await this.orgsRepository.createManyLocations(mapped, data.org_id);
+        } catch (e: unknown) {
+            this.logger.error('Failed to create locations', getErrorMessage(e));
+            throw new InternalServerErrorException(ApiErrors.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Находит и возвращает активную организацию по идентификатору.
+     *
+     * @param {number} orgId - Идентификатор организации
+     *
+     * @returns {Promise<OrgResponseDto>} - Данные организации
+     *
+     * @throws {ConflictException} `ORG_STATUS_IS_PENDING` — если организация на проверке
+     * @throws {ConflictException} `ORG_NOT_FOUND_OR_INACTIVE` — если организация не найдена или неактивна
+     */
+    private async getActiveOrg(orgId: number): Promise<OrgResponseDto> {
+        const orgData = await this.orgsRepository.findOrgInfoById(orgId);
+        if (!orgData || orgData.status !== Activity.Active) {
+            if (orgData?.status === Activity.Pending) {
+                throw new ConflictException(ApiErrors.ORG_STATUS_IS_PENDING);
+            }
             throw new ConflictException(ApiErrors.ORG_NOT_FOUND_OR_INACTIVE);
         }
 
-        try {
-            await this.prisma.$transaction(async tx => {
-                await Promise.all(
-                    data.locations.map(async loc => {
-                        const hash = this.generateUniqueLocationHash(data.org_id, loc);
-                        if (
-                            await this.orgsRepository.findLocationByParams({uniqueHash: hash}, tx)
-                        ) {
-                            throw new ConflictException(
-                                ApiErrors.LOCATION_IS_ALREADY_EXIST(loc.name)
-                            );
-                        }
-
-                        return this.orgsRepository.createLocation(loc, data.org_id, hash, tx);
-                    })
-                );
-            });
-        } catch (error) {
-            if (error instanceof ConflictException) {
-                throw error;
-            }
-
-            this.logger.error(
-                `Failed to create locations`,
-                error instanceof Error ? error.stack : (error as string)
-            );
-            throw new InternalServerErrorException(ApiErrors.INTERNAL_SERVER_ERROR);
-        }
+        return orgData;
     }
 
     /**

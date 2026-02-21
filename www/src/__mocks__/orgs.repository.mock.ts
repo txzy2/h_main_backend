@@ -6,5 +6,6 @@ export const mockOrgsRepository: jest.Mocked<OrgsRepositoryInterface> = {
     findById: jest.fn(),
     findOrgInfoById: jest.fn(),
     createLocation: jest.fn(),
+    createManyLocations: jest.fn(),
     findLocationByParams: jest.fn()
 };

@@ -1,6 +1,7 @@
 import {CreateLocationDto} from '@/orgs/dto/create-location.dto';
 import {CreateOrgDto} from '@/orgs/dto/create-org.dto';
-import {Organization} from '@prisma/client';
+import {OrgResponseDto} from '@/orgs/dto/org-info.response.dto';
+import {Activity, Organization} from '@prisma/client';
 
 export const mockCreateOrgDto: CreateOrgDto = {
     name: 'Test Org',
@@ -20,6 +21,13 @@ export const mockOrganization: Organization = {
     status: 'Pending',
     createdAt: new Date(),
     updatedAt: new Date()
+};
+
+/** Организация со статусом Active и пустым массивом локаций (для getActiveOrg / findOrgInfoById) */
+export const mockActiveOrgResponse: OrgResponseDto = {
+    ...mockOrganization,
+    status: Activity.Active,
+    locations: []
 };
 
 export const mockCreateLocationDto: CreateLocationDto = {

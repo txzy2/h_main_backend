@@ -4,6 +4,7 @@ import {Activity, Location, Organization, Prisma} from '@prisma/client';
 import {CreateOrgDto} from './dto/create-org.dto';
 import {OrgResponseDto} from './dto/org-info.response.dto';
 import {ReqLocation} from './dto/create-location.dto';
+import {AppLoggerService} from '@/common/logger/logger.service';
 
 export const ORGS_REPOSITORY = Symbol('ORGS_REPOSITORY');
 
@@ -26,11 +27,18 @@ export interface OrgsRepositoryInterface {
         uniqueHash: string,
         tx?: Prisma.TransactionClient
     ): Promise<Location>;
+
+    createManyLocations(data: (ReqLocation & {uniqueHash: string})[], orgId: number): Promise<void>;
 }
 
 @Injectable()
 export class OrgsRepository implements OrgsRepositoryInterface {
-    public constructor(private readonly prisma: PrismaService) {}
+    public constructor(
+        private readonly prisma: PrismaService,
+        private readonly logger: AppLoggerService
+    ) {
+        this.logger.setContext(OrgsRepository.name);
+    }
 
     /**
      * findById - Поиск организации по id
@@ -67,7 +75,7 @@ export class OrgsRepository implements OrgsRepositoryInterface {
     public async create(org: CreateOrgDto, tx?: Prisma.TransactionClient): Promise<Organization> {
         const client = tx ?? this.prisma;
 
-        return await client.organization.create({
+        const createdOrg = await client.organization.create({
             data: {
                 name: org.name,
                 inn: org.inn,
@@ -77,6 +85,16 @@ export class OrgsRepository implements OrgsRepositoryInterface {
                 updatedAt: new Date()
             }
         });
+
+        this.logger.log(
+            JSON.stringify({
+                context: 'create',
+                orgId: createdOrg.id,
+                name: createdOrg.name
+            })
+        );
+
+        return createdOrg;
     }
 
     /**
@@ -125,6 +143,31 @@ export class OrgsRepository implements OrgsRepositoryInterface {
                 status: Activity.Active
             }
         });
+    }
+
+    public async createManyLocations(
+        data: (ReqLocation & {uniqueHash: string})[],
+        orgId: number,
+        tx?: Prisma.TransactionClient
+    ): Promise<void> {
+        const client = tx ?? this.prisma;
+
+        const result = await client.location.createMany({
+            data: data.map(loc => ({
+                orgId,
+                uniqueHash: loc.uniqueHash,
+                name: loc.name,
+                address: loc.address,
+                phone: loc.phone,
+                activePlaces: loc.active_places,
+                status: Activity.Active
+            })),
+            skipDuplicates: true
+        });
+
+        this.logger.debug(
+            `createManyLocations: requested=${data.length}, inserted=${result.count}, skipped=${data.length - result.count}`
+        );
     }
 
     /**
