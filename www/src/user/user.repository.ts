@@ -12,6 +12,11 @@ export interface UsersRepositoryInterface {
         tx?: Prisma.TransactionClient
     ): Promise<User | null>;
 
+    findUserByParam(
+        param: Prisma.UserWhereInput,
+        tx?: Prisma.TransactionClient
+    ): Promise<User | null>;
+
     create(user: CreateUserDto, tx?: Prisma.TransactionClient): Promise<void>;
 }
 
@@ -45,11 +50,39 @@ export class UsersRepository implements UsersRepositoryInterface {
         });
     }
 
+    /**
+     * checkExistByParams - Проверка существования пользователя
+     *
+     * @param {Prisma.UserWhereInput} param - параметры поиска
+     * @param {Prisma.TransactionClient} tx - транзакция
+     *
+     * @returns {Promise<User | null>}
+     */
     public async checkExistByParams(
         param: Prisma.UserWhereInput,
         tx?: Prisma.TransactionClient
     ): Promise<User | null> {
         const client = tx ?? this.prisma;
         return await client.user.findFirst({where: param});
+    }
+
+    /**
+     * findUserByParam - Поиск пользователя по переданному параметру
+     *
+     * @param {Prisma.UserWhereInput} param - параметр поиска
+     * @param {Prisma.TransactionClient} tx - транзакция
+     *
+     * @returns {Promise<User | null>} - найденный пользователь или null, если пользователь не найден
+     */
+    public async findUserByParam(
+        param: Prisma.UserWhereInput,
+        tx?: Prisma.TransactionClient
+    ): Promise<User | null> {
+        const client = tx ?? this.prisma;
+        return await client.user.findFirst({
+            where: {
+                ...param
+            }
+        });
     }
 }

@@ -1,3 +1,4 @@
+import {CreateLocationDto} from '@/orgs/dto/create-location.dto';
 import {CreateOrgDto} from '@/orgs/dto/create-org.dto';
 import {Organization} from '@prisma/client';
 
@@ -19,4 +20,12 @@ export const mockOrganization: Organization = {
     status: 'Pending',
     createdAt: new Date(),
     updatedAt: new Date()
+};
+
+export const mockCreateLocationDto: CreateLocationDto = {
+    org_id: 1,
+    locations: [
+        {name: 'Локация 1', address: 'ул. Ленина 1', phone: '79991234567', active_places: 10},
+        {name: 'Локация 2', address: 'ул. Пушкина 2', phone: '79997654321', active_places: 5}
+    ]
 };

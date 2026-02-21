@@ -21,6 +21,8 @@ export class LicensesJob extends WorkerHost {
             case 'check_expiring':
                 await this.checkExpiring();
                 break;
+            case 'disable_expired':
+                break;
             default:
                 this.logger.warn(`[LicensesJob] Неизвестная задача: ${job.name}`);
         }

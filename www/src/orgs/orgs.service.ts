@@ -1,15 +1,18 @@
-import {ConflictException, Inject, Injectable} from '@nestjs/common';
+import {ConflictException, Inject, Injectable, InternalServerErrorException} from '@nestjs/common';
 import {CreateOrgDto} from './dto/create-org.dto';
-import {UpdateOrgDto} from './dto/update-org.dto';
 import {ORGS_REPOSITORY, type OrgsRepositoryInterface} from './orgs.repository';
 import {AuthUser} from '@/types';
-import {Organization, Prisma} from '@prisma/client';
+import {Activity, Organization, Prisma} from '@prisma/client';
 import {LicensesService} from '@/licenses/licenses.service';
-import {PLANS_REPOSITORY, type PlansRepositoryInterface} from '@/plans/plans.repository';
 import {UserService} from '@/user/user.service';
 import {AppLoggerService} from '@/common/logger/logger.service';
 import {PrismaService} from '@/prisma/prisma.service';
 import {PlansService} from '@/plans/plans.service';
+import {OrgResponseDto} from './dto/org-info.response.dto';
+import {ApiErrors} from '@/common/errors/api-errors';
+import {CreateLocationDto, ReqLocation} from './dto/create-location.dto';
+
+import * as crypto from 'crypto';
 
 @Injectable()
 export class OrgsService {
@@ -54,9 +57,89 @@ export class OrgsService {
             );
             return org;
         });
-        this.logger.log(`Организация ${newOrg.name} зарегистрирована`);
 
         return newOrg;
+    }
+
+    /**
+     * getOrgInfo - Получение организации и точек к которой привязан пользователь
+     *
+     * @param {AuthUser} user
+     *
+     * @returns {Promise<OrgResponseDto>}
+     *
+     * @throws {ConflictException}
+     */
+    public async getOrgInfo(user: AuthUser): Promise<OrgResponseDto> {
+        const existUser = await this.userService.getUserByParam({extId: user.sub});
+        const orgData = await this.orgsRepository.findOrgInfoById(existUser.orgId);
+        if (!orgData || orgData.status !== Activity.Active) {
+            throw new ConflictException(ApiErrors.ORG_NOT_FOUND_OR_INACTIVE);
+        }
+
+        return orgData;
+    }
+
+    /**
+     * generateUniqueLocationHash - Генерирует уникальный SHA-256 хэш для локации
+     *
+     * @param {number} orgId - Идентификатор организации
+     * @param {ReqLocation} locData - Данные локации
+     *
+     * @returns {string} HEX-строка SHA-256 хэша
+     *
+     */
+    private generateUniqueLocationHash(orgId: number, locData: ReqLocation): string {
+        const raw = `${orgId}:${locData.name.trim().toLowerCase()}:${locData.phone?.trim()}`;
+        return crypto.createHash('sha256').update(raw).digest('hex');
+    }
+
+    /**
+     * addLocationForOrg - Добавляет локации для организации.
+     *
+     * @param {CreateLocationDto} data - DTO с идентификатором организации и массивом локаций
+     * @param {AuthUser} user - Авторизованный пользователь
+     *
+     * @throws {ConflictException} Если локация с таким названием и телефоном уже существует
+     * @throws {InternalServerErrorException} Если произошла ошибка при создании локаций
+     *
+     * @returns {Promise<void>}
+     *
+     */
+    public async addLocationForOrg(data: CreateLocationDto, user: AuthUser): Promise<void> {
+        await this.userService.checkExistUser({
+            extId: user.sub,
+            orgId: data.org_id
+        });
+
+        try {
+            await this.prisma.$transaction(async tx => {
+                await Promise.all(
+                    data.locations.map(async loc => {
+                        const hash = this.generateUniqueLocationHash(data.org_id, loc);
+                        if (
+                            await this.orgsRepository.findLocationByParams({uniqueHash: hash}, tx)
+                        ) {
+                            throw new ConflictException(
+                                ApiErrors.LOCATION_IS_ALREADY_EXIST(loc.name)
+                            );
+                        }
+
+                        return this.orgsRepository.createLocation(loc, data.org_id, hash, tx);
+                    })
+                );
+            });
+        } catch (error) {
+            if (error instanceof ConflictException) {
+                throw error;
+            }
+
+            this.logger.error(
+                `Failed to create locations`,
+                error instanceof Error ? error.stack : (error as string)
+            );
+            throw new InternalServerErrorException(ApiErrors.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -75,7 +158,7 @@ export class OrgsService {
 
         if (org) {
             throw new ConflictException({
-                message: 'Организация уже зарегистрирована',
+                message: ApiErrors.ORG_IS_ALREADY_EXIST,
                 data: {
                     name: org.name,
                     inn: org.inn,
@@ -84,21 +167,5 @@ export class OrgsService {
                 }
             });
         }
-    }
-
-    findAll() {
-        return `This action returns all orgs`;
-    }
-
-    findOne(id: number) {
-        return `This action returns a #${id} org`;
-    }
-
-    update(id: number, updateOrgDto: UpdateOrgDto) {
-        return `This action updates a #${id} org`;
-    }
-
-    remove(id: number) {
-        return `This action removes a #${id} org`;
     }
 }

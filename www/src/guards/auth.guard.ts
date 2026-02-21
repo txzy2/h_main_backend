@@ -1,3 +1,4 @@
+import {ApiErrors} from '@/common/errors/api-errors';
 import {CommonHttpService} from '@/common/http/http.service';
 import {AuthUser} from '@/types';
 import {
@@ -21,7 +22,7 @@ export class AuthGuard implements CanActivate {
         const request = context.switchToHttp().getRequest();
         const token = request.headers.authorization?.split(' ')[1];
 
-        if (!token) throw new UnauthorizedException('Токен не предоставлен');
+        if (!token) throw new UnauthorizedException(ApiErrors.TOKEN_NOT_PROVIDED);
 
         try {
             const user = await this.httpService.get<{success: boolean; data: AuthUser}>(
@@ -34,12 +35,12 @@ export class AuthGuard implements CanActivate {
         } catch (error) {
             // сервис аутентификации вернул 401 — токен невалидный или истёк
             if (error.response?.status === 401) {
-                throw new UnauthorizedException('Токен недействителен или истёк');
+                throw new UnauthorizedException(ApiErrors.TOKEN_IS_EXPIRED);
             }
 
             // сервис аутентификации недоступен
             if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-                throw new ServiceUnavailableException('Сервис аутентификации недоступен');
+                throw new ServiceUnavailableException(ApiErrors.AUTH_SERVICE_UNAVAILABLE);
             }
 
             console.log(error);
