@@ -1,8 +1,9 @@
 import {AppLoggerService} from '@/common/logger/logger.service';
 import {ConflictException, Inject, Injectable} from '@nestjs/common';
-import {Prisma} from '@prisma/client';
+import {Prisma, User} from '@prisma/client';
 import {CreateUserDto} from './dto/create-user.dto';
 import {USERS_REPOSITORY, type UsersRepositoryInterface} from './user.repository';
+import {ApiErrors} from '@/common/errors/api-errors';
 
 @Injectable()
 export class UserService {
@@ -22,12 +23,17 @@ export class UserService {
      * @returns {Promise<void>}
      */
     public async createUser(user: CreateUserDto, tx?: Prisma.TransactionClient): Promise<void> {
-        try {
-            await this.checkExistUser({login: user.login, extId: user.extId}, tx);
-            await this.usersRepository.create(user, tx);
-        } catch (error) {
-            this.logger.error(error);
+        if (await this.checkExistUser({OR: [{login: user.login}, {extId: user.extId}]}, tx)) {
+            throw new ConflictException({
+                message: ApiErrors.USER_ALREADY_EXIST,
+                data: {
+                    name: user.name,
+                    login: user.login
+                }
+            });
         }
+
+        await this.usersRepository.create(user, tx);
     }
 
     /**
@@ -37,25 +43,34 @@ export class UserService {
      *
      * @returns {Promise<void>}
      */
-    private async checkExistUser(
+    public async checkExistUser(
         params: Prisma.UserWhereInput,
         tx?: Prisma.TransactionClient
-    ): Promise<void> {
-        const user = await this.usersRepository.checkExistByParams(
-            {
-                OR: Object.entries(params).map(([key, value]) => ({[key]: value}))
-            },
-            tx
-        );
+    ): Promise<boolean> {
+        return !!(await this.usersRepository.checkExistByParams(params, tx));
+    }
 
-        if (user) {
-            throw new ConflictException({
-                message: 'Пользователь уже зарегистрирован',
-                data: {
-                    name: user.name,
-                    login: user.login
-                }
-            });
+    /**
+     * getUserByParam - Получение пользователя по параметру
+     *
+     * @param {Prisma.UserWhereInput} param
+     * @param {Prisma.TransactionClient} tx?
+     *
+     * @returns {Promise<User>}
+     *
+     * @throws {ConflictException}
+     */
+    public async getUserByParam(
+        param: Prisma.UserWhereInput,
+        tx?: Prisma.TransactionClient
+    ): Promise<User> {
+        const user = await this.usersRepository.findUserByParam(param, tx);
+        if (!user) {
+            throw new ConflictException(
+                ApiErrors.USER_NOT_FOUND_BY_PARAM(Object.keys(param).join(', '))
+            );
         }
+
+        return user;
     }
 }

@@ -9,7 +9,7 @@ export class LicensesScheduler {
 
     // каждый день в 9:00
     // @Cron(CronExpression.EVERY_DAY_AT_10PM)
-    @Cron('35 23 * * *')
+    @Cron('07 20 * * *')
     async checkExpiringLicenses(): Promise<void> {
         await this.licensesQueue.add('check_expiring', {});
     }

@@ -2,6 +2,7 @@ import {ConflictException, Inject, Injectable} from '@nestjs/common';
 import {PLANS_REPOSITORY, type PlansRepositoryInterface} from './plans.repository';
 import {Plans} from '@prisma/client';
 import {AppLoggerService} from '@/common/logger/logger.service';
+import {ApiErrors} from '@/common/errors/api-errors';
 
 @Injectable()
 export class PlansService {
@@ -34,7 +35,7 @@ export class PlansService {
         const plan = await this.plansRepository.findByName(name);
         if (!plan) {
             this.logger.error(`Тарифный план ${name} не найден.`);
-            throw new ConflictException('Выбранный тарифный план не найден');
+            throw new ConflictException(ApiErrors.TARIF_PLAN_NOT_FOUND);
         }
         return plan;
     }

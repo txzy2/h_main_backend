@@ -66,6 +66,8 @@ model Organization {
 model Location {
   id Int @id @default(autoincrement())
 
+  uniqueHash String @unique @map("unique_hash") @db.VarChar(64)
+
   org   Organization @relation(fields: [orgId], references: [id])
   orgId Int          @map("org_id")
 
