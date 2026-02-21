@@ -112,21 +112,17 @@ describe('OrgsService', () => {
 
     describe('addLocationForOrg', () => {
         beforeEach(() => {
-            // эмулируем $transaction — просто вызываем колбэк с tx
             mockPrismaService.$transaction.mockImplementation((cb: Function) => cb({}));
+            mockUserService.checkExistUser.mockResolvedValue(true);
+            mockOrgsRepository.checkExistByParams.mockResolvedValue(mockOrganization);
         });
 
         it('успешно создаёт локации', async () => {
-            mockUserService.checkExistUser.mockResolvedValue(undefined);
             mockOrgsRepository.findLocationByParams.mockResolvedValue(false);
             mockOrgsRepository.createLocation.mockResolvedValue({});
 
             await service.addLocationForOrg(mockCreateLocationDto, mockAuthUser);
 
-            expect(mockUserService.checkExistUser).toHaveBeenCalledWith({
-                extId: mockAuthUser.sub,
-                orgId: mockCreateLocationDto.org_id
-            });
             expect(mockOrgsRepository.findLocationByParams).toHaveBeenCalledTimes(
                 mockCreateLocationDto.locations.length
             );
@@ -136,8 +132,7 @@ describe('OrgsService', () => {
         });
 
         it('бросает ConflictException если локация уже существует', async () => {
-            mockUserService.checkExistUser.mockResolvedValue(undefined);
-            mockOrgsRepository.findLocationByParams.mockResolvedValue(true); // дубль
+            mockOrgsRepository.findLocationByParams.mockResolvedValue(true);
 
             await expect(
                 service.addLocationForOrg(mockCreateLocationDto, mockAuthUser)
@@ -147,7 +142,6 @@ describe('OrgsService', () => {
         });
 
         it('бросает InternalServerErrorException если createLocation упал', async () => {
-            mockUserService.checkExistUser.mockResolvedValue(undefined);
             mockOrgsRepository.findLocationByParams.mockResolvedValue(false);
             mockOrgsRepository.createLocation.mockRejectedValue(new Error('DB error'));
 
@@ -158,18 +152,27 @@ describe('OrgsService', () => {
             expect(mockLoggerService.error).toHaveBeenCalled();
         });
 
-        it('бросает ошибку если checkExistUser упал', async () => {
-            mockUserService.checkExistUser.mockRejectedValue(new Error('User not found'));
+        it('бросает ConflictException если пользователь не найден', async () => {
+            mockUserService.checkExistUser.mockResolvedValue(false);
 
             await expect(
                 service.addLocationForOrg(mockCreateLocationDto, mockAuthUser)
-            ).rejects.toThrow('User not found');
+            ).rejects.toThrow(ConflictException);
 
             expect(mockOrgsRepository.createLocation).not.toHaveBeenCalled();
         });
 
-        it('не создаёт локации если транзакция упала', async () => {
-            mockUserService.checkExistUser.mockResolvedValue(undefined);
+        it('бросает ConflictException если организация не найдена', async () => {
+            mockOrgsRepository.checkExistByParams.mockResolvedValue(null);
+
+            await expect(
+                service.addLocationForOrg(mockCreateLocationDto, mockAuthUser)
+            ).rejects.toThrow(ConflictException);
+
+            expect(mockOrgsRepository.createLocation).not.toHaveBeenCalled();
+        });
+
+        it('бросает InternalServerErrorException если транзакция упала', async () => {
             mockPrismaService.$transaction.mockRejectedValue(new Error('Transaction error'));
 
             await expect(

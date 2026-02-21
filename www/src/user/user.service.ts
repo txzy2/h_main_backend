@@ -23,12 +23,17 @@ export class UserService {
      * @returns {Promise<void>}
      */
     public async createUser(user: CreateUserDto, tx?: Prisma.TransactionClient): Promise<void> {
-        try {
-            await this.checkExistUser({login: user.login, extId: user.extId}, tx);
-            await this.usersRepository.create(user, tx);
-        } catch (error) {
-            this.logger.error(error as string);
+        if (await this.checkExistUser({OR: [{login: user.login}, {extId: user.extId}]}, tx)) {
+            throw new ConflictException({
+                message: ApiErrors.USER_ALREADY_EXIST,
+                data: {
+                    name: user.name,
+                    login: user.login
+                }
+            });
         }
+
+        await this.usersRepository.create(user, tx);
     }
 
     /**
@@ -41,23 +46,8 @@ export class UserService {
     public async checkExistUser(
         params: Prisma.UserWhereInput,
         tx?: Prisma.TransactionClient
-    ): Promise<void> {
-        const user = await this.usersRepository.checkExistByParams(
-            {
-                OR: Object.entries(params).map(([key, value]) => ({[key]: value}))
-            },
-            tx
-        );
-
-        if (user) {
-            throw new ConflictException({
-                message: ApiErrors.USER_ALREADY_EXIST,
-                data: {
-                    name: user.name,
-                    login: user.login
-                }
-            });
-        }
+    ): Promise<boolean> {
+        return !!(await this.usersRepository.checkExistByParams(params, tx));
     }
 
     /**

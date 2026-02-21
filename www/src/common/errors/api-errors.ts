@@ -1,5 +1,6 @@
 export const ApiErrors = {
     INTERNAL_SERVER_ERROR: 'Внутренняя ошибка сервера',
+    USER_NOT_FOUND: 'Пользователь не найден или не активен',
     USER_ALREADY_EXIST: 'Пользователь уже зарегистрирован',
     ORG_IS_ALREADY_EXIST: 'Организация уже зарегистрирована',
     ORG_NOT_FOUND_OR_INACTIVE:

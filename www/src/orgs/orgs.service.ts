@@ -36,10 +36,21 @@ export class OrgsService {
      * @returns {Promise<Organization>}
      */
     public async create(orgData: CreateOrgDto, user: AuthUser): Promise<Organization> {
-        await this.checkExistOrg({
-            name: orgData.name,
-            inn: orgData.inn
-        });
+        if (
+            await this.checkExistOrg({
+                OR: [{inn: orgData.inn}, {kpp: orgData.kpp}, {name: orgData.name}]
+            })
+        ) {
+            throw new ConflictException({
+                message: ApiErrors.ORG_IS_ALREADY_EXIST,
+                data: {
+                    name: orgData.name,
+                    inn: orgData.inn,
+                    kpp: orgData.kpp,
+                    director: orgData.director
+                }
+            });
+        }
 
         const plan = await this.plansService.getByName(orgData.plan);
         const newOrg = await this.prisma.runTransaction(async tx => {
@@ -107,10 +118,18 @@ export class OrgsService {
      *
      */
     public async addLocationForOrg(data: CreateLocationDto, user: AuthUser): Promise<void> {
-        await this.userService.checkExistUser({
-            extId: user.sub,
-            orgId: data.org_id
-        });
+        if (
+            !(await this.userService.checkExistUser({
+                extId: user.sub,
+                orgId: data.org_id
+            }))
+        ) {
+            throw new ConflictException(ApiErrors.USER_NOT_FOUND);
+        }
+
+        if (!(await this.checkExistOrg({id: data.org_id}))) {
+            throw new ConflictException(ApiErrors.ORG_NOT_FOUND_OR_INACTIVE);
+        }
 
         try {
             await this.prisma.$transaction(async tx => {
@@ -147,25 +166,11 @@ export class OrgsService {
      *
      * @param {Prisma.OrganizationWhereInput} params
      *
-     * @returns {Promise<void>}
+     * @returns {Promise<boolean>}
      *
      * @throws {ConflictException}
      */
-    private async checkExistOrg(params: Prisma.OrganizationWhereInput): Promise<void> {
-        const org = await this.orgsRepository.checkExistByParams({
-            OR: Object.entries(params).map(([key, value]) => ({[key]: value}))
-        });
-
-        if (org) {
-            throw new ConflictException({
-                message: ApiErrors.ORG_IS_ALREADY_EXIST,
-                data: {
-                    name: org.name,
-                    inn: org.inn,
-                    kpp: org.kpp,
-                    director: org.director
-                }
-            });
-        }
+    private async checkExistOrg(params: Prisma.OrganizationWhereInput): Promise<boolean> {
+        return !!(await this.orgsRepository.checkExistByParams(params));
     }
 }

@@ -96,7 +96,7 @@ export class OrgsController {
     @UseGuards(AuthGuard)
     public async createLocation(
         @CurrentUser() user: AuthUser,
-        locations: CreateLocationDto
+        @Body() locations: CreateLocationDto
     ): Promise<ApiResponse> {
         this.logger.log(`Add Locations request by ${user.sub}`);
         await this.orgsService.addLocationForOrg(locations, user);

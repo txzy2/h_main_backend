@@ -2,8 +2,9 @@ import {Test, TestingModule} from '@nestjs/testing';
 
 import {UserService} from './user.service';
 import {USERS_REPOSITORY} from './user.repository';
-import {mockLoggerService, mockAuthUser, mockCreateUser, mockUserRepository} from '@/__mocks__';
+import {mockLoggerService, mockCreateUser, mockUserRepository} from '@/__mocks__';
 import {AppLoggerService} from '@/common/logger/logger.service';
+import {ConflictException} from '@nestjs/common';
 
 describe('UserService', () => {
     let service: UserService;
@@ -43,21 +44,18 @@ describe('UserService', () => {
             expect(mockUserRepository.create).toHaveBeenCalledWith(mockCreateUser, tx);
         });
 
-        it('не создаёт пользователя если он уже существует', async () => {
+        it('бросает ConflictException если пользователь уже существует', async () => {
             mockUserRepository.checkExistByParams.mockResolvedValue(mockCreateUser);
 
-            await service.createUser(mockCreateUser);
+            await expect(service.createUser(mockCreateUser)).rejects.toThrow(ConflictException);
 
-            // create не должен вызваться — пользователь уже есть
             expect(mockUserRepository.create).not.toHaveBeenCalled();
         });
 
-        it('логирует ошибку если что-то пошло не так', async () => {
+        it('пробрасывает ошибку если репозиторий упал', async () => {
             mockUserRepository.checkExistByParams.mockRejectedValue(new Error('DB error'));
 
-            await service.createUser(mockCreateUser);
-
-            expect(mockLoggerService.error).toHaveBeenCalledTimes(1);
+            await expect(service.createUser(mockCreateUser)).rejects.toThrow('DB error');
         });
     });
 });

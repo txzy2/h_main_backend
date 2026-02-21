@@ -1,4 +1,14 @@
-import {IsNotEmpty, IsNumber, IsPhoneNumber, IsString, Max, MaxLength} from 'class-validator';
+import {
+    IsNotEmpty,
+    IsNumber,
+    IsPhoneNumber,
+    IsString,
+    Max,
+    MaxLength,
+    ValidateNested
+} from 'class-validator';
+
+import {Type} from 'class-transformer';
 
 export class ReqLocation {
     @IsString()
@@ -29,5 +39,8 @@ export class CreateLocationDto {
     @IsNotEmpty()
     org_id: number;
 
+    @IsNotEmpty()
+    @ValidateNested({each: true})
+    @Type(() => ReqLocation)
     locations: ReqLocation[];
 }
