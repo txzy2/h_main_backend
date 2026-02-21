@@ -19,7 +19,10 @@ export class PlansService {
      * @returns {Promise<Plans[]>}
      */
     public async getPlans(): Promise<Plans[]> {
-        return this.plansRepository.getPlans();
+        this.logger.debug('Getting all plans');
+        const plans = await this.plansRepository.getPlans();
+        this.logger.debug(`Plans fetched: count=${plans.length}`);
+        return plans;
     }
 
     /**
@@ -32,11 +35,13 @@ export class PlansService {
      * @throws {ConflictException} - Тарифный план не найден
      */
     public async getByName(name: string): Promise<Plans> {
+        this.logger.debug(`Getting plan by name: ${name}`);
         const plan = await this.plansRepository.findByName(name);
         if (!plan) {
             this.logger.error(`Тарифный план ${name} не найден.`);
             throw new ConflictException(ApiErrors.TARIF_PLAN_NOT_FOUND);
         }
+        this.logger.debug(`Plan found: name=${name}, id=${plan.id}`);
         return plan;
     }
 }

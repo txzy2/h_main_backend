@@ -99,20 +99,20 @@ export class OrgsService {
     }
 
     /**
-    * addLocationForOrg - Добавляет локации для организации.
-    *
-    * @param {CreateLocationDto} data - DTO с идентификатором организации и массивом локаций
-    * @param {AuthUser} user - Авторизованный пользователь
-    *
-    * @throws {ConflictException} - `USER_NOT_FOUND` — если пользователь не принадлежит организации
-    * @throws {ConflictException} `ORG_STATUS_IS_PENDING` — если организация на проверке
-    * @throws {ConflictException} `ORG_NOT_FOUND_OR_INACTIVE` — если организация не найдена или неактивна
+  * addLocationForOrg - Добавляет локации для организации.
+  *
+  * @param {CreateLocationDto} data - DTO с идентификатором организации и массивом локаций
+  * @param {AuthUser} user - Авторизованный пользователь
+  *
+  * @throws {ConflictException} - `USER_NOT_FOUND` — если пользователь не принадлежит организации
+  * @throws {ConflictException} `ORG_STATUS_IS_PENDING` — если организация на проверке
+  * @throws {ConflictException} `ORG_NOT_FOUND_OR_INACTIVE` — если организация не найдена или неактивна
 
-    * @throws {InternalServerErrorException} Если произошла ошибка при создании локаций
-    *
-    * @returns {Promise<void>}
-    *
-    */
+  * @throws {InternalServerErrorException} Если произошла ошибка при создании локаций
+  *
+  * @returns {Promise<void>}
+  *
+  */
     public async addLocationForOrg(data: CreateLocationDto, user: AuthUser): Promise<void> {
         if (
             !(await this.userService.checkExistUser({
