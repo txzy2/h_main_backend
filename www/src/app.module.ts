@@ -20,6 +20,8 @@ import {AppService} from './app.service';
 import {CommonHttpModule} from './common/http/http.module';
 import {UserModule} from './user/user.module';
 import {PlansModule} from './plans/plans.module';
+import {LocationsModule} from './locations/locations.module';
+import {TicketsModule} from './tickets/tickets.module';
 
 @Module({
     imports: [
@@ -36,6 +38,7 @@ import {PlansModule} from './plans/plans.module';
         LoggerModule,
         LicensesModule,
         LicensesJobModule,
+        TicketsModule,
         CommonHttpModule,
         BullModule.forRootAsync({
             imports: [ConfigModule],
@@ -54,7 +57,8 @@ import {PlansModule} from './plans/plans.module';
         }),
         ...BULL_BOARD_FEATURES,
         ScheduleModule.forRoot(),
-        UserModule
+        UserModule,
+        LocationsModule
     ],
     controllers: [AppController],
     providers: [AppService]

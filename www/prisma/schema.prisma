@@ -21,6 +21,12 @@ enum BookingStatus {
   Completed
 }
 
+enum RequestStatus {
+  Pending
+  Approved
+  Rejected
+}
+
 model User {
   id Int @id @default(autoincrement())
 
@@ -29,7 +35,7 @@ model User {
 
   phoneNumber String @map("phone") @db.VarChar(11)
 
-  extId String       @unique @map("ext_id")
+  extId String       @unique @map("ext_id") @db.VarChar(64)
   org   Organization @relation(fields: [orgId], references: [id])
   orgId Int          @map("org_id")
 
@@ -52,12 +58,16 @@ model Organization {
   status Activity
   //TODO: Добавить хранение иконок организации
 
+  uniqueHash String  @unique @map("unique_hash") @db.VarChar(64)
+  updatedBy  String? @map("updated_by") @db.VarChar(64)
+
   licenses  License[]
   locations Location[]
   users     User[]
+  tickets Tickets[]
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
 
   @@index([status])
   @@map("orgs")
@@ -95,7 +105,7 @@ model Booking {
   location   Location @relation(fields: [locationId], references: [id])
   locationId Int      @map("location_id")
 
-  userExtId   String        @map("user_ext_id") @db.VarChar(255)
+  userExtId   String        @map("user_ext_id") @db.VarChar(64)
   guestsCount Int           @map("guests_count")
   status      BookingStatus
   scheduledAt DateTime      @map("scheduled_at")
@@ -147,14 +157,37 @@ model Plans {
   @@map("plans")
 }
 
-// model Contractors {
-//   id Int @id @default(autoincrement())
+model TicketType {
+  id       Int     @id @default(autoincrement())
+  alias    String  @unique @db.VarChar(64)
+  name     String  @db.VarChar(255)
+  isActive Boolean @default(true) @map("is_active")
 
-//   user   User @relation(fields: [userId], references: [id])
-//   userId Int  @map("user_id")
+  tickets Tickets[]
 
-//   createdAt DateTime @default(now()) @map("created_at")
-//   updatedAt DateTime @default(now()) @map("updated_at")
+  @@map("ticket_types")
+}
 
-//   @@map("contractors")
-// }
+model Tickets {
+  id       Int    @id @default(autoincrement())
+  ticketId String @unique @map("ticket_id") @db.VarChar(64)
+
+  orgId        Int          @map("org_id")
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  typeId Int        @map("type_id")
+  type   TicketType @relation(fields: [typeId], references: [id])
+
+  requestedData Json?         @map("requested_data")
+  status        RequestStatus @default(Pending)
+  reason        String?       @db.Text
+
+  reviewedByExtId String? @map("reviewed_by_ext_id") @db.VarChar(64)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([orgId, status])
+  @@index([typeId, status])
+  @@map("tickets")
+}

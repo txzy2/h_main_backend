@@ -20,11 +20,13 @@ export const mockExpiredLicnseDto: LicenseWithOrg[] = [
         createdAt: new Date(),
         org: {
             id: 1,
+            uniqueHash: '123',
             name: 'Test Org',
             inn: '1234567890',
             kpp: '123456789',
             director: 'Ivan Ivanov',
             status: 'Pending',
+            updatedBy: 'Anton',
             createdAt: new Date(),
             updatedAt: new Date()
         }

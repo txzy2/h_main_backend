@@ -1,10 +1,9 @@
 import {PrismaService} from '@/prisma/prisma.service';
 import {Injectable} from '@nestjs/common';
-import {Activity, Location, Organization, Prisma} from '@prisma/client';
-import {CreateOrgDto} from './dto/create-org.dto';
-import {OrgResponseDto} from './dto/org-info.response.dto';
-import {ReqLocation} from './dto/create-location.dto';
+import {Activity, Organization, Prisma} from '@prisma/client';
 import {AppLoggerService} from '@/common/logger/logger.service';
+
+import {CreateOrgDto, OrgResponseDto} from './dto';
 
 export const ORGS_REPOSITORY = Symbol('ORGS_REPOSITORY');
 
@@ -14,21 +13,7 @@ export interface OrgsRepositoryInterface {
 
     checkExistByParams(param: Prisma.OrganizationWhereInput): Promise<Organization | null>;
 
-    create(data: CreateOrgDto, tx?: Prisma.TransactionClient): Promise<Organization>;
-
-    findLocationByParams(
-        params: Prisma.LocationWhereInput,
-        tx?: Prisma.TransactionClient
-    ): Promise<boolean>;
-
-    createLocation(
-        locData: ReqLocation,
-        orgId: number,
-        uniqueHash: string,
-        tx?: Prisma.TransactionClient
-    ): Promise<Location>;
-
-    createManyLocations(data: (ReqLocation & {uniqueHash: string})[], orgId: number): Promise<void>;
+    create(org: CreateOrgDto, hash: string, tx?: Prisma.TransactionClient): Promise<Organization>;
 }
 
 @Injectable()
@@ -72,7 +57,11 @@ export class OrgsRepository implements OrgsRepositoryInterface {
      *
      * @returns {Promise<Organization>}
      */
-    public async create(org: CreateOrgDto, tx?: Prisma.TransactionClient): Promise<Organization> {
+    public async create(
+        org: CreateOrgDto,
+        hash: string,
+        tx?: Prisma.TransactionClient
+    ): Promise<Organization> {
         const client = tx ?? this.prisma;
 
         const createdOrg = await client.organization.create({
@@ -81,6 +70,7 @@ export class OrgsRepository implements OrgsRepositoryInterface {
                 inn: org.inn,
                 kpp: org.kpp,
                 director: org.director,
+                uniqueHash: hash,
                 status: Activity.Pending,
                 updatedAt: new Date()
             }
@@ -95,79 +85,6 @@ export class OrgsRepository implements OrgsRepositoryInterface {
         );
 
         return createdOrg;
-    }
-
-    /**
-     * findLocationByParams - Проверяет существование локации по заданным параметрам.
-     *
-     * @param {Prisma.LocationWhereInput} params - Параметры поиска локации
-     * @param {Prisma.TransactionClient} [tx] - Клиент транзакции (опционально)
-     *
-     * @returns {Promise<boolean>} true если локация найдена, false если нет
-     *
-     */
-    public async findLocationByParams(
-        params: Prisma.LocationWhereInput,
-        tx?: Prisma.TransactionClient
-    ): Promise<boolean> {
-        const client = tx ?? this.prisma;
-        return !!(await client.location.findFirst({where: params}));
-    }
-
-    /**
-     * createLocation - Создангие точки для организации
-     *
-     * @param {ReqLocation} locData
-     * @param {number} orgId
-     * @param {Prisma.TransactionClient} tx?
-     *
-     * @returns {Promise<Location>}
-     *
-     */
-    public async createLocation(
-        locData: ReqLocation,
-        orgId: number,
-        uniqueHash: string,
-        tx?: Prisma.TransactionClient
-    ): Promise<Location> {
-        const client = tx ?? this.prisma;
-
-        return await client.location.create({
-            data: {
-                orgId,
-                uniqueHash,
-                name: locData.name,
-                address: locData.address,
-                phone: locData.phone,
-                activePlaces: locData.active_places,
-                status: Activity.Active
-            }
-        });
-    }
-
-    public async createManyLocations(
-        data: (ReqLocation & {uniqueHash: string})[],
-        orgId: number,
-        tx?: Prisma.TransactionClient
-    ): Promise<void> {
-        const client = tx ?? this.prisma;
-
-        const result = await client.location.createMany({
-            data: data.map(loc => ({
-                orgId,
-                uniqueHash: loc.uniqueHash,
-                name: loc.name,
-                address: loc.address,
-                phone: loc.phone,
-                activePlaces: loc.active_places,
-                status: Activity.Active
-            })),
-            skipDuplicates: true
-        });
-
-        this.logger.debug(
-            `createManyLocations: requested=${data.length}, inserted=${result.count}, skipped=${data.length - result.count}`
-        );
     }
 
     /**
