@@ -2,7 +2,8 @@ import {Test, TestingModule} from '@nestjs/testing';
 import {LicensesService} from './licenses.service';
 import {LICENSES_REPOSITORY} from './licenses.repository';
 import {mockLicensesRepository} from '@/__mocks__/license.repository.mock';
-import {mockExpiredLicnseDto} from '@/__mocks__';
+import {mockExpiredLicnseDto, mockLoggerService} from '@/__mocks__';
+import {AppLoggerService} from '@/common/logger/logger.service';
 
 describe('LicensesService', () => {
     let service: LicensesService;
@@ -11,7 +12,8 @@ describe('LicensesService', () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 LicensesService,
-                {provide: LICENSES_REPOSITORY, useValue: mockLicensesRepository}
+                {provide: LICENSES_REPOSITORY, useValue: mockLicensesRepository},
+                {provide: AppLoggerService, useValue: mockLoggerService}
             ]
         }).compile();
 

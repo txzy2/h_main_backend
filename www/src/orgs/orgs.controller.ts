@@ -1,21 +1,17 @@
 import {ApiResponse} from '@/common';
 import {CurrentUser} from '@/common/decorators/current-user.decorator';
-import {Roles} from '@/common/decorators/roles.decorator';
-import {USER_ROLES} from '@/common/constants/roles.constants';
 import {AppLoggerService} from '@/common/logger/logger.service';
 import {AuthGuard} from '@/guards/auth.guard';
-import {RolesGuard} from '@/guards/roles.guard';
 import type {AuthUser} from '@/types';
 import {Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards} from '@nestjs/common';
 import {ApiBearerAuth, ApiOperation, ApiTags} from '@nestjs/swagger';
 import {ApiResponse as SwaggerResponse} from '@nestjs/swagger/dist/decorators/api-response.decorator';
 import {Organization} from '@prisma/client';
 import {SUCCESS_CREATED_ORG} from './constants/response.constants';
-import {CreateOrgDto} from './dto/create-org.dto';
-import {OrgsService} from './orgs.service';
-import {OrgResponseDto} from './dto/org-info.response.dto';
+import {CreateOrgDto, OrgResponseDto} from './dto';
 import {ApiErrors} from '@/common/errors/api-errors';
-import {CreateLocationDto} from './dto/create-location.dto';
+import {CreateOrgUseCase} from './use-cases/create-org.use-case';
+import {OrgsService} from './orgs.service';
 
 @ApiTags('Организации')
 @ApiBearerAuth('JWT-auth')
@@ -23,6 +19,7 @@ import {CreateLocationDto} from './dto/create-location.dto';
 export class OrgsController {
     constructor(
         private readonly orgsService: OrgsService,
+        private readonly createOrgUseCase: CreateOrgUseCase,
         private readonly logger: AppLoggerService
     ) {
         this.logger.setContext(OrgsController.name);
@@ -58,7 +55,9 @@ export class OrgsController {
         @CurrentUser() user: AuthUser
     ): Promise<ApiResponse> {
         this.logger.log(`Регистрация организации: ${createOrgDto.name}`);
-        return ApiResponse.ok<Organization>(await this.orgsService.create(createOrgDto, user));
+        return ApiResponse.ok<Organization>(
+            await this.createOrgUseCase.execute(createOrgDto, user)
+        );
     }
 
     // ============ Получение информации об организации ============
@@ -80,27 +79,19 @@ export class OrgsController {
         return ApiResponse.ok<OrgResponseDto>(await this.orgsService.getOrgInfo(user));
     }
 
-    // ======================================================================
-    // ======= Общие контроллеры для работы с локациями организации =========
-    // ======================================================================
+    // ============ Заявка на обновление организации ============
 
-    // ================ Добавление точек для организации ================
+    // ============ Обновление организации (только для СуперПользователей) ============
 
-    @ApiOperation({summary: 'Добавление точек для организации'})
-    @SwaggerResponse({status: 202, description: 'Точки успешно добавлены'})
-    @SwaggerResponse({status: 401, description: ApiErrors.TOKEN_IS_EXPIRED})
-    @SwaggerResponse({status: 403, description: ApiErrors.ACCESS_DENIED})
-    @SwaggerResponse({status: 409, description: ApiErrors.USER_NOT_FOUND})
-    @Post('/locations/add')
-    @HttpCode(HttpStatus.ACCEPTED)
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles(USER_ROLES.ADMIN, USER_ROLES.SUPER_USER)
-    public async createLocation(
-        @CurrentUser() user: AuthUser,
-        @Body() locations: CreateLocationDto
-    ): Promise<ApiResponse> {
-        this.logger.log(`Add Locations request by ${user.sub}`);
-        await this.orgsService.addLocationForOrg(locations, user);
-        return ApiResponse.ok<string>('Точки добавлены');
-    }
+    // @Patch('/update')
+    // @HttpCode(HttpStatus.OK)
+    // @Roles(USER_ROLES.SUPER_USER)
+    // @UseGuards(AuthGuard, RolesGuard)
+    // public async update(
+    //     @Body() updateOrgDto: UpdateOrgDto,
+    //     @CurrentUser() user: AuthUser
+    // ): Promise<ApiResponse> {
+    //     this.logger.log(`Обновление организации от ${user.sub}`);
+    //     return ApiResponse.ok<Organization>(await this.orgsService.update(updateOrgDto, user));
+    // }
 }

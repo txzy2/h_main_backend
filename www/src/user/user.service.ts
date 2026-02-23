@@ -48,7 +48,7 @@ export class UserService {
      *
      * @param {Prisma.UserWhereInput} params
      *
-     * @returns {Promise<void>}
+     * @returns {Promise<boolean>}
      */
     public async checkExistUser(
         params: Prisma.UserWhereInput,

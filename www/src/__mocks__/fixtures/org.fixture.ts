@@ -14,11 +14,13 @@ export const mockCreateOrgDto: CreateOrgDto = {
 
 export const mockOrganization: Organization = {
     id: 1,
+    uniqueHash: 'qwe',
     name: 'Test Org',
     inn: '1234567890',
     kpp: '123456789',
     director: 'Ivan Ivanov',
     status: 'Pending',
+    updatedBy: 'anton',
     createdAt: new Date(),
     updatedAt: new Date()
 };
