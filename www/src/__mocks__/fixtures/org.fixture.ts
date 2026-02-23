@@ -1,4 +1,4 @@
-import {CreateLocationDto} from '@/orgs/dto/create-location.dto';
+import {CreateLocationDto} from '@/locations/dto/create-location.dto';
 import {CreateOrgDto} from '@/orgs/dto/create-org.dto';
 import {OrgResponseDto} from '@/orgs/dto/org-info.response.dto';
 import {Activity, Organization} from '@prisma/client';

@@ -4,6 +4,9 @@ import {AppLoggerService} from '@/common/logger/logger.service';
 import {Prisma, TicketType} from '@prisma/client';
 import {ApiErrors} from '@/common/errors/api-errors';
 
+/**
+ * Сервис для управления типами заявок
+ */
 @Injectable()
 export class TicketTypesService {
     public constructor(
@@ -14,6 +17,16 @@ export class TicketTypesService {
         this.logger.setContext(TicketTypesService.name);
     }
 
+    /**
+     * Получение типа заявки по параметрам или выбрасывание NotFoundException
+     *
+     * @param {Prisma.TicketTypeWhereInput} params - Параметры запроса Prisma
+     * @param {Prisma.TransactionClient} [tx] - Клиент транзакции (опционально)
+     *
+     * @returns {Promise<TicketType>} Найденный тип заявки
+     *
+     * @throws {NotFoundException} Если тип заявки не найден
+     */
     public async getTicketTypeByParamsOrThrow(
         params: Prisma.TicketTypeWhereInput,
         tx?: Prisma.TransactionClient

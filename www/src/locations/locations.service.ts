@@ -4,7 +4,7 @@ import {AppLoggerService} from '@/common/logger/logger.service';
 import {ApiErrors} from '@/common/errors/api-errors';
 import {UserService} from '@/user/user.service';
 import {OrgsService} from '@/orgs/orgs.service';
-import {CreateLocationDto, ReqLocation} from '@/orgs/dto/create-location.dto';
+import {CreateLocationDto, ReqLocation} from './dto/create-location.dto';
 import {AuthUser} from '@/types';
 import {getErrorMessage} from '@/common/errors/get-error-message';
 
