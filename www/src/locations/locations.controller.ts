@@ -7,7 +7,7 @@ import {ApiResponse as SwaggerResponse} from '@nestjs/swagger/dist/decorators/ap
 import {USER_ROLES} from '@/common/constants/roles.constants';
 import {Roles} from '@/common/decorators/roles.decorator';
 import {CurrentUser} from '@/common/decorators/current-user.decorator';
-import {CreateLocationDto} from '@/orgs/dto/create-location.dto';
+import {CreateLocationDto} from './dto/create-location.dto';
 import {AppLoggerService} from '@/common/logger/logger.service';
 import {ApiErrors} from '@/common/errors/api-errors';
 import {type AuthUser} from '@/types';

@@ -23,6 +23,7 @@ enum BookingStatus {
 
 enum RequestStatus {
   Pending
+  InProgress
   Approved
   Rejected
 }
@@ -64,10 +65,10 @@ model Organization {
   licenses  License[]
   locations Location[]
   users     User[]
-  tickets Tickets[]
+  tickets   Tickets[]
 
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([status])
   @@map("orgs")
