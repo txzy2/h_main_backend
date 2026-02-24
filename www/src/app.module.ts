@@ -9,8 +9,8 @@ import {LoggerModule} from './common/logger/logger.module';
 import {LicensesJobModule} from './jobs/licenses/licenses.job.module';
 import {LicensesModule} from './licenses/licenses.module';
 import {OrgsModule} from './orgs/orgs.module';
-import {PrismaModule} from './prisma/prisma.module';
-import {RedisModule} from './redis/redis.module';
+import {PrismaModule} from './infrastructure/prisma/prisma.module';
+import {RedisModule} from './infrastructure/redis/redis.module';
 
 import {BULL_BOARD_FEATURES} from './core/bull-board/futures';
 import conf, {validationSchema} from './core/conf';

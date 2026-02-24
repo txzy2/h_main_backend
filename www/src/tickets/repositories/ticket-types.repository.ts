@@ -1,5 +1,5 @@
 import {AppLoggerService} from '@/common/logger/logger.service';
-import {PrismaService} from '@/prisma/prisma.service';
+import {PrismaService} from '@/infrastructure/prisma/prisma.service';
 import {Injectable} from '@nestjs/common';
 import {Prisma, TicketType} from '@prisma/client';
 

@@ -1,7 +1,7 @@
 import {LicensesService} from '@/licenses/licenses.service';
 import {UserService} from '@/user/user.service';
 import {Inject, Injectable, ConflictException, InternalServerErrorException} from '@nestjs/common';
-import {PrismaService} from '@/prisma/prisma.service';
+import {PrismaService} from '@/infrastructure/prisma/prisma.service';
 import {CreateOrgDto} from '@/orgs/dto/create-org.dto';
 import {AuthUser} from '@/types';
 import {Organization, Prisma} from '@prisma/client';

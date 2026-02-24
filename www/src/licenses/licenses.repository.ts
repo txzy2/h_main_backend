@@ -1,5 +1,5 @@
 import {BUSINESS_LIMITS} from '@/core/constants';
-import {PrismaService} from '@/prisma/prisma.service';
+import {PrismaService} from '@/infrastructure/prisma/prisma.service';
 import {LicenseWithOrg} from '@/types';
 
 import {Injectable} from '@nestjs/common';

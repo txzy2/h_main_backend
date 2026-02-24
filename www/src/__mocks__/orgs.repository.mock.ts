@@ -4,5 +4,6 @@ export const mockOrgsRepository: jest.Mocked<OrgsRepositoryInterface> = {
     create: jest.fn(),
     checkExistByParams: jest.fn(),
     findById: jest.fn(),
-    findOrgInfoById: jest.fn()
+    findOrgInfoById: jest.fn(),
+    getAllOrgs: jest.fn()
 };

@@ -1,5 +1,5 @@
 import {LicensesModule} from '@/licenses/licenses.module';
-import {PrismaService} from '@/prisma/prisma.service';
+import {PrismaService} from '@/infrastructure/prisma/prisma.service';
 import {UserModule} from '@/user/user.module';
 import {Module} from '@nestjs/common';
 import {OrgsController} from './orgs.controller';

@@ -1,5 +1,5 @@
 import {AppLoggerService} from '@/common/logger/logger.service';
-import {PrismaService} from '@/prisma/prisma.service';
+import {PrismaService} from '@/infrastructure/prisma/prisma.service';
 import {CreateTicketInput} from '@/types';
 import {Injectable} from '@nestjs/common';
 import {Prisma, Tickets} from '@prisma/client';
@@ -107,9 +107,11 @@ export class TicketsRepository implements TicketsRepositoryInterface {
 
     /**
      * Поиск заявок с ограничением количества (пагинация)
+     *
      * @param {FilterTicketsRequestQueryDto} data - Параметры фильтрации и пагинации
      * @param {number} [orgId] - ID организации (опционально)
      * @param {Prisma.TransactionClient} [tx] - Клиент транзакции (опционально)
+     *
      * @returns {Promise<TicketsWithType[]>} Массив заявок с типами
      */
     public async findWithLimits(
@@ -118,12 +120,6 @@ export class TicketsRepository implements TicketsRepositoryInterface {
         tx?: Prisma.TransactionClient
     ): Promise<TicketsWithType[]> {
         const client = tx ?? this.prisma;
-
-        this.logger.debugWithMeta('findWithLimits data', {
-            data,
-            orgId
-        });
-
         return await client.tickets.findMany({
             where: {
                 ...(orgId && {orgId})

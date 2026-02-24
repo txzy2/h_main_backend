@@ -116,7 +116,6 @@ export class TicketsService {
         }
 
         const tickets = await this.ticketsRepository.findWithLimits(data, orgId);
-        this.logger.debugWithMeta('repo response', {tickets});
         if (!tickets.length) {
             throw new NotFoundException(ApiErrors.TICKET_NOT_FOUND);
         }

@@ -9,7 +9,7 @@ import {TicketsController} from './tickets.controller';
 import {TicketsService, TicketTypesService} from './services';
 import {UpdateOrgTicketUseCase} from './use-case/update-org-ticket';
 import {OrgsModule} from '@/orgs/orgs.module';
-import {PrismaModule} from '@/prisma/prisma.module';
+import {PrismaModule} from '@/infrastructure/prisma/prisma.module';
 
 @Module({
     imports: [OrgsModule, PrismaModule],

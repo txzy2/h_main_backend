@@ -3,15 +3,16 @@ import {CurrentUser} from '@/common/decorators/current-user.decorator';
 import {AppLoggerService} from '@/common/logger/logger.service';
 import {AuthGuard} from '@/guards/auth.guard';
 import type {AuthUser} from '@/types';
-import {Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards} from '@nestjs/common';
+import {Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards} from '@nestjs/common';
 import {ApiBearerAuth, ApiOperation, ApiTags} from '@nestjs/swagger';
 import {ApiResponse as SwaggerResponse} from '@nestjs/swagger/dist/decorators/api-response.decorator';
 import {Organization} from '@prisma/client';
 import {SUCCESS_CREATED_ORG} from './constants/response.constants';
-import {CreateOrgDto, OrgResponseDto} from './dto';
+import {CreateOrgDto, FilterOrgsRequestDto, OrgResponseDto} from './dto';
 import {ApiErrors} from '@/common/errors/api-errors';
 import {CreateOrgUseCase} from './use-cases/create-org.use-case';
 import {OrgsService} from './orgs.service';
+import {USER_ROLES} from '@/common/constants/roles.constants';
 
 @ApiTags('Организации')
 @ApiBearerAuth('JWT-auth')
@@ -74,8 +75,14 @@ export class OrgsController {
     @Get()
     @HttpCode(HttpStatus.OK)
     @UseGuards(AuthGuard)
-    public async get(@CurrentUser() user: AuthUser): Promise<ApiResponse> {
-        this.logger.log(`Попытка получить организацию от ${user.sub}`);
+    public async get(
+        @CurrentUser() user: AuthUser,
+        @Query() queryParams: FilterOrgsRequestDto
+    ): Promise<ApiResponse> {
+        this.logger.log(`Попытка получить организацию от ${user.sub} (${user.role})`);
+        if (user.role === USER_ROLES.SUPER_USER) {
+            return ApiResponse.ok<OrgResponseDto[]>(await this.orgsService.getAllOrgs(queryParams));
+        }
         return ApiResponse.ok<OrgResponseDto>(await this.orgsService.getOrgInfo(user));
     }
 

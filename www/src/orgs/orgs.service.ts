@@ -5,7 +5,7 @@ import {UserService} from '@/user/user.service';
 import {AppLoggerService} from '@/common/logger/logger.service';
 import {ApiErrors} from '@/common/errors/api-errors';
 import {ORGS_REPOSITORY, type OrgsRepositoryInterface} from './orgs.repository';
-import {OrgResponseDto} from './dto';
+import {FilterOrgsRequestDto, OrgResponseDto} from './dto';
 
 import * as crypto from 'crypto';
 
@@ -31,6 +31,15 @@ export class OrgsService {
     public async getOrgInfo(user: AuthUser): Promise<OrgResponseDto> {
         const existUser = await this.userService.getUserByParam({extId: user.sub});
         return this.getActiveOrg(existUser.orgId);
+    }
+
+    public async getAllOrgs(queryParams: FilterOrgsRequestDto): Promise<OrgResponseDto[]> {
+        const orgs = await this.orgsRepository.getAllOrgs(queryParams);
+        if (!orgs.length) {
+            throw new NotFoundException(ApiErrors.ORG_NOT_FOUND_OR_INACTIVE);
+        }
+
+        return orgs;
     }
 
     /**

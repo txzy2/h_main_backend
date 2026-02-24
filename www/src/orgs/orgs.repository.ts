@@ -1,15 +1,20 @@
-import {PrismaService} from '@/prisma/prisma.service';
+import {PrismaService} from '@/infrastructure/prisma/prisma.service';
 import {Injectable} from '@nestjs/common';
 import {Activity, Organization, Prisma} from '@prisma/client';
 import {AppLoggerService} from '@/common/logger/logger.service';
 
-import {CreateOrgDto, OrgResponseDto} from './dto';
+import {CreateOrgDto, FilterOrgsRequestDto, OrgResponseDto} from './dto';
 
 export const ORGS_REPOSITORY = Symbol('ORGS_REPOSITORY');
 
 export interface OrgsRepositoryInterface {
     findById(id: number): Promise<Organization | null>;
     findOrgInfoById(orgId: number): Promise<OrgResponseDto | null>;
+
+    getAllOrgs(
+        queryParams: FilterOrgsRequestDto,
+        tx?: Prisma.TransactionClient
+    ): Promise<OrgResponseDto[]>;
 
     checkExistByParams(param: Prisma.OrganizationWhereInput): Promise<Organization | null>;
 
@@ -47,6 +52,28 @@ export class OrgsRepository implements OrgsRepositoryInterface {
         params: Prisma.OrganizationWhereInput
     ): Promise<Organization | null> {
         return await this.prisma.organization.findFirst({where: params});
+    }
+
+    /**
+     * getAllOrgs - Получение всех орагнизаций с пагинацией
+     *
+     * @param {FilterOrgsRequestDto} queryParams
+     * @param {Prisma.TransactionClient} tx?
+     *
+     * @returns {Promise<OrgResponseDto[]>}
+     */
+    public async getAllOrgs(
+        queryParams: FilterOrgsRequestDto,
+        tx?: Prisma.TransactionClient
+    ): Promise<OrgResponseDto[]> {
+        const client = tx ?? this.prisma;
+        return await client.organization.findMany({
+            include: {
+                locations: true
+            },
+            take: queryParams.limit,
+            skip: queryParams.offset
+        });
     }
 
     /**

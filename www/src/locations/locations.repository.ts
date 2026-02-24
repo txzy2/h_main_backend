@@ -1,6 +1,6 @@
 import {AppLoggerService} from '@/common/logger/logger.service';
 import {ReqLocation} from './dto/create-location.dto';
-import {PrismaService} from '@/prisma/prisma.service';
+import {PrismaService} from '@/infrastructure/prisma/prisma.service';
 import {Injectable} from '@nestjs/common';
 import {Activity, Location, Prisma} from '@prisma/client';
 

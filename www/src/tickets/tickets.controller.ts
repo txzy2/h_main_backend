@@ -28,7 +28,7 @@ import {
 } from './constants/response.constants';
 
 @Controller('tickets')
-@ApiTags('tickets')
+@ApiTags('Заявки')
 @ApiBearerAuth()
 export class TicketsController {
     constructor(

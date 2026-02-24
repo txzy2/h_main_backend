@@ -1,6 +1,6 @@
 import {Module} from '@nestjs/common';
 import {PlansService} from './plans.service';
-import {PrismaService} from '@/prisma/prisma.service';
+import {PrismaService} from '@/infrastructure/prisma/prisma.service';
 import {PlansController} from './plans.controller';
 import {PLANS_REPOSITORY, PlansRepository} from './plans.repository';
 
