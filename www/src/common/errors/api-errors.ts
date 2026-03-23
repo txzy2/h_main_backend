@@ -25,6 +25,7 @@ export const ApiErrors = {
     ORG_STATUS_IS_PENDING: 'Организация находится на проверке',
     ORG_NOT_FOUND_OR_INACTIVE:
         'Данному пользователю не принадлежит ни одна организация или она не активна',
+    ORG_UPDATE_ERROR: 'Ошибка обновления организации',
 
     // ===========================
     // Тарифные планы
@@ -45,7 +46,8 @@ export const ApiErrors = {
     TICKET_NOT_FOUND: 'Заявка не найдена',
     TICKET_TYPE_NOT_FOUND: 'Тип заявки не найден',
     TICKET_ALREADY_EXIST: 'Тикет уже существует. Ожидайте',
-    TICKET_ERROR_CREATE: 'Ошибка создания заявки'
+    TICKET_ERROR_CREATE: 'Ошибка создания заявки',
+    TICKET_ERROR_UPDATE: 'Ошибка обновления заявки',
 } as const;
 
 export type ApiErrors = Extract<(typeof ApiErrors)[keyof typeof ApiErrors], string>;

@@ -12,7 +12,7 @@ export class BaseTicketDto<T> {
     @ApiProperty({description: 'Хеш-идентификатор организации'})
     @IsString()
     @IsNotEmpty()
-    org_hash: string;
+    org_hash!: string;
 
     /**
      * Причина создания заявки
@@ -21,7 +21,7 @@ export class BaseTicketDto<T> {
     @IsNotEmpty()
     @IsString()
     @MaxLength(255)
-    reason: string;
+    reason!: string;
 
     /**
      * Тип создаваемой заявки
@@ -30,7 +30,7 @@ export class BaseTicketDto<T> {
     @IsNotEmpty()
     @IsString()
     @MaxLength(255)
-    ticket_type: string;
+    ticket_type!: string;
 
     /**
      * Дополнительные данные заявки
@@ -38,5 +38,5 @@ export class BaseTicketDto<T> {
     @ApiProperty({description: 'Дополнительные данные заявки'})
     @IsNotEmpty()
     @ValidateNested()
-    data: T;
+    data!: T;
 }

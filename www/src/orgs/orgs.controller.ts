@@ -3,15 +3,19 @@ import {CurrentUser} from '@/common/decorators/current-user.decorator';
 import {AppLoggerService} from '@/common/logger/logger.service';
 import {AuthGuard} from '@/guards/auth.guard';
 import type {AuthUser} from '@/types';
-import {Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards} from '@nestjs/common';
+import {Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, UseGuards} from '@nestjs/common';
 import {ApiBearerAuth, ApiOperation, ApiTags} from '@nestjs/swagger';
 import {ApiResponse as SwaggerResponse} from '@nestjs/swagger/dist/decorators/api-response.decorator';
 import {Organization} from '@prisma/client';
 import {SUCCESS_CREATED_ORG} from './constants/response.constants';
-import {CreateOrgDto, OrgResponseDto} from './dto';
+import {CreateOrgDto, OrgResponseDto, UpdateOrgDto} from './dto';
 import {ApiErrors} from '@/common/errors/api-errors';
 import {CreateOrgUseCase} from './use-cases/create-org.use-case';
 import {OrgsService} from './orgs.service';
+import {Roles} from '@/common/decorators/roles.decorator';
+import {USER_ROLES} from '@/common/constants/roles.constants';
+import {RolesGuard} from '@/guards/roles.guard';
+import {UpdateOrgUseCase} from './use-cases/update-org.use-case';
 
 @ApiTags('Организации')
 @ApiBearerAuth('JWT-auth')
@@ -20,6 +24,7 @@ export class OrgsController {
     constructor(
         private readonly orgsService: OrgsService,
         private readonly createOrgUseCase: CreateOrgUseCase,
+        private readonly updateOrgUseCase: UpdateOrgUseCase,
         private readonly logger: AppLoggerService
     ) {
         this.logger.setContext(OrgsController.name);
@@ -80,18 +85,27 @@ export class OrgsController {
     }
 
     // ============ Заявка на обновление организации ============
-
     // ============ Обновление организации (только для СуперПользователей) ============
 
-    // @Patch('/update')
-    // @HttpCode(HttpStatus.OK)
-    // @Roles(USER_ROLES.SUPER_USER)
-    // @UseGuards(AuthGuard, RolesGuard)
-    // public async update(
-    //     @Body() updateOrgDto: UpdateOrgDto,
-    //     @CurrentUser() user: AuthUser
-    // ): Promise<ApiResponse> {
-    //     this.logger.log(`Обновление организации от ${user.sub}`);
-    //     return ApiResponse.ok<Organization>(await this.orgsService.update(updateOrgDto, user));
-    // }
+    @ApiOperation({
+        summary: 'Обновление организации'
+    })
+    @SwaggerResponse({
+        status: 200,
+        description: 'Успешное обновление организации'
+    })
+    @SwaggerResponse({status: 401, description: ApiErrors.TOKEN_IS_EXPIRED})
+    @SwaggerResponse({status: 403, description: ApiErrors.ACCESS_DENIED})
+    @SwaggerResponse({status: 404, description: ApiErrors.ORG_NOT_FOUND_OR_INACTIVE})
+    @Patch('/update')
+    @HttpCode(HttpStatus.OK)
+    @Roles(USER_ROLES.SUPER_USER)
+    @UseGuards(AuthGuard, RolesGuard)
+    public async update(
+        @Body() updateOrgDto: UpdateOrgDto,
+        @CurrentUser() user: AuthUser
+    ): Promise<ApiResponse> {
+        this.logger.log(`Обновление организации от ${user.sub}`);
+        return ApiResponse.ok<string>(await this.updateOrgUseCase.execute(updateOrgDto));
+    }
 }

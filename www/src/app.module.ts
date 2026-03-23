@@ -1,4 +1,3 @@
-import {ExpressAdapter} from '@bull-board/express';
 import {BullBoardModule} from '@bull-board/nestjs';
 import {BullModule} from '@nestjs/bullmq';
 import {Module} from '@nestjs/common';
@@ -22,6 +21,8 @@ import {UserModule} from './user/user.module';
 import {PlansModule} from './plans/plans.module';
 import {LocationsModule} from './locations/locations.module';
 import {TicketsModule} from './tickets/tickets.module';
+import {FastifyAdapter} from '@bull-board/fastify';
+import {OrgsJobModule} from './jobs/orgs/orgs.job.module';
 
 @Module({
     imports: [
@@ -38,6 +39,7 @@ import {TicketsModule} from './tickets/tickets.module';
         LoggerModule,
         LicensesModule,
         LicensesJobModule,
+        OrgsJobModule,
         TicketsModule,
         CommonHttpModule,
         BullModule.forRootAsync({
@@ -53,7 +55,7 @@ import {TicketsModule} from './tickets/tickets.module';
         //TODO: на проде в nginx конфиге ограничить доступ через пароль
         BullBoardModule.forRoot({
             route: '/queues',
-            adapter: ExpressAdapter
+            adapter: FastifyAdapter
         }),
         ...BULL_BOARD_FEATURES,
         ScheduleModule.forRoot(),

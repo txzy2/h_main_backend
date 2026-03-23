@@ -1,5 +1,5 @@
 import {Type} from 'class-transformer';
-import {IsOptional, IsString} from 'class-validator';
+import {IsEmail, IsNotEmpty, IsOptional, IsString} from 'class-validator';
 import {BaseTicketDto} from './base-ticket.dto';
 
 /**
@@ -39,6 +39,10 @@ export class AdditionalEditAttributes {
  * DTO for organization update ticket request
  */
 export class UpdateOrgTicketRequestDto extends BaseTicketDto<AdditionalEditAttributes> {
+    @IsEmail()
+    @IsNotEmpty()
+    email!: string;
+
     @Type(() => AdditionalEditAttributes)
-    data: AdditionalEditAttributes;
+    data!: AdditionalEditAttributes;
 }

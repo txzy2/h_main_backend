@@ -7,4 +7,6 @@ export interface CreateTicketInput {
     requestedData: unknown;
     reason?: string | null;
     status: RequestStatus;
+    email: string;
+    userExtId: string;
 }

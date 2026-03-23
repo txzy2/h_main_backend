@@ -1,8 +1,11 @@
-import {PartialType, OmitType, ApiProperty} from '@nestjs/swagger';
+import {PartialType, ApiProperty} from '@nestjs/swagger';
 import {CreateOrgDto} from './create-org.dto';
-import {IsNotEmpty, IsString} from 'class-validator';
+import {IsNotEmpty, IsOptional, IsString, ValidateNested} from 'class-validator';
+import {Type} from 'class-transformer';
 
-export class UpdateOrgDto extends PartialType(OmitType(CreateOrgDto, ['inn', 'kpp'] as const)) {
+class PartialCreateOrgDto extends PartialType(CreateOrgDto) {}
+
+export class UpdateOrgDto {
     @ApiProperty({
         description: 'Уникальный хэш организации',
         example: '006c9ef9d7ee203481fc9479f52b2bd4...',
@@ -10,5 +13,19 @@ export class UpdateOrgDto extends PartialType(OmitType(CreateOrgDto, ['inn', 'kp
     })
     @IsString()
     @IsNotEmpty()
-    hash: string;
+    hash!: string;
+
+    @ApiProperty({
+        description: 'Уникальный идентификатор заявки',
+        example: 'def8acee-22fb-42c5-adc2-2416ae65be58',
+        required: true
+    })
+    @IsString()
+    @IsNotEmpty()
+    ticket_id!: string;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => PartialCreateOrgDto)
+    update_data?: PartialCreateOrgDto;
 }
