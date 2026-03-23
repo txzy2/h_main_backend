@@ -44,17 +44,13 @@ export class AuthGuard implements CanActivate {
         } catch (error) {
             // сервис аутентификации вернул 401 — токен невалидный или истёк
             if (error.response?.status === 401) {
-                this.logger.warn(
-                    `Token is expired or invalid: ${request.method} ${request.path}`
-                );
+                this.logger.warn(`Token is expired or invalid: ${request.method} ${request.path}`);
                 throw new UnauthorizedException(ApiErrors.TOKEN_IS_EXPIRED);
             }
 
             // сервис аутентификации недоступен
             if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-                this.logger.error(
-                    `Auth service is unavailable: code=${error.code}, url=${url}`
-                );
+                this.logger.error(`Auth service is unavailable: code=${error.code}, url=${url}`);
                 throw new ServiceUnavailableException(ApiErrors.AUTH_SERVICE_UNAVAILABLE);
             }
 

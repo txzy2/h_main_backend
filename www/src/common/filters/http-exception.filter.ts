@@ -1,11 +1,11 @@
 import {ArgumentsHost, Catch, ExceptionFilter, HttpException} from '@nestjs/common';
-import {Response} from 'express';
+import {FastifyReply} from 'fastify';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
     catch(exception: HttpException, host: ArgumentsHost): void {
         const ctx = host.switchToHttp();
-        const response = ctx.getResponse<Response>();
+        const response = ctx.getResponse<FastifyReply>();
         const exceptionResponse: unknown = exception.getResponse();
 
         let errorMessage: string;
@@ -23,7 +23,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
             errorMessage = 'Внутренняя ошибка сервера';
         }
 
-        response.status(exception.getStatus()).json({
+        response.status(exception.getStatus()).send({
             success: false,
             error: errorMessage
         } satisfies {success: false; error: string});

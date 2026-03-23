@@ -48,7 +48,7 @@ init-dev:
 	@echo "Setting up application..."
 	cd www && \
 		bun install && \
-		npx prisma generate
+		bunx prisma generate
 	@echo "✓ Initialization complete!"
 
 reset-dev: clean-project

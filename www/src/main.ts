@@ -1,23 +1,28 @@
 import {NestFactory} from '@nestjs/core';
+import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify';
 import {AppModule} from './app.module';
 import {ConfigService} from '@nestjs/config';
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger';
-
-import * as dotenv from 'dotenv';
 import {ValidationPipe} from '@nestjs/common';
 import {HttpExceptionFilter} from './common/filters/http-exception.filter';
-
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestFastifyApplication>(
+        AppModule,
+        new FastifyAdapter({
+            logger: false
+        })
+    );
+
     const configService = app.get(ConfigService);
 
     app.useGlobalPipes(
         new ValidationPipe({
-            whitelist: true, // удаляет поля, которых нет в DTO
-            forbidNonWhitelisted: true, // выбрасывает ошибку, если есть лишние поля
-            transform: true, // автоматически преобразует типы
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
             transformOptions: {
                 enableImplicitConversion: true
             },
@@ -43,10 +48,13 @@ async function bootstrap() {
             'JWT-auth'
         )
         .build();
+
     const documentFactory = () => SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('/docs', app, documentFactory);
 
     app.useGlobalFilters(new HttpExceptionFilter());
-    await app.listen(configService.get<number>('port') ?? 3000);
+
+    // Fastify по умолчанию слушает только localhost — для Docker нужен '0.0.0.0'
+    await app.listen(configService.get<number>('port') ?? 3000, '0.0.0.0');
 }
 bootstrap();

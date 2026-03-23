@@ -51,7 +51,8 @@ export class UpdateOrgTicketUseCase {
         const newTicket = await this.ticketsService.createUpdateOrgTicket(
             data,
             ticketType.id,
-            existOrg.id
+            existOrg.id,
+            user.sub
         );
 
         return {

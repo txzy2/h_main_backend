@@ -13,37 +13,24 @@ type TicketsWithType = Prisma.TicketsGetPayload<{include: {type: true}}>;
  * Интерфейс репозитория заявок
  */
 export interface TicketsRepositoryInterface {
-    /**
-     * Поиск заявки по параметрам
-     * @param {Prisma.TicketsWhereInput} params - Параметры поиска
-     * @param {Prisma.TransactionClient} [tx] - Клиент транзакции (опционально)
-     * @returns {Promise<Tickets | null>} Найденная заявка или null
-     */
     findByParams(
         params: Prisma.TicketsWhereInput,
         tx?: Prisma.TransactionClient
     ): Promise<Tickets | null>;
 
-    /**
-     * Поиск заявок с ограничением количества
-     * @param {FilterTicketsRequestQueryDto} data - Параметры фильтрации и пагинации
-     * @param {number} [orgId] - ID организации (опционально)
-     * @param {Prisma.TransactionClient} [tx] - Клиент транзакции (опционально)
-     * @returns {Promise<TicketsWithType[]>} Массив заявок с типами
-     */
     findWithLimits(
         data: FilterTicketsRequestQueryDto,
         orgId?: number,
         tx?: Prisma.TransactionClient
     ): Promise<TicketsWithType[]>;
 
-    /**
-     * Создание новой заявки
-     * @param {CreateTicketInput} data - Данные для создания заявки
-     * @param {Prisma.TransactionClient} [tx] - Клиент транзакции (опционально)
-     * @returns {Promise<Tickets | null>} Созданная заявка или null
-     */
     create(data: CreateTicketInput, tx?: Prisma.TransactionClient): Promise<Tickets | null>;
+
+    update(
+        ticketId: string,
+        data: Prisma.TicketsUpdateInput,
+        tx?: Prisma.TransactionClient
+    ): Promise<Tickets>;
 }
 
 /**
@@ -91,9 +78,13 @@ export class TicketsRepository implements TicketsRepositoryInterface {
             requestedData: data.requestedData as Prisma.InputJsonValue,
             reason: data.reason,
             status: data.status,
+            email: data.email,
 
             organization: {
                 connect: {id: data.orgId}
+            },
+            user: {
+                connect: {extId: data.userExtId}
             },
             type: {
                 connect: {id: data.typeId}
@@ -131,6 +122,26 @@ export class TicketsRepository implements TicketsRepositoryInterface {
             include: {type: true},
             take: data.limit,
             skip: data.offset
+        });
+    }
+
+    /**
+     * Обновление заявки
+     * @param {string} ticketId - ID заявки
+     * @param {Prisma.TicketsUpdateInput} data - Данные для обновления заявки
+     * @param {Prisma.TransactionClient} [tx] - Клиент транзакции (опционально)
+     * @returns {Promise<Tickets>} Обновленная заявка
+     */
+    public async update(
+        ticketId: string,
+        data: Prisma.TicketsUpdateInput,
+        tx?: Prisma.TransactionClient
+    ): Promise<Tickets> {
+        const client = tx ?? this.prisma;
+
+        return await client.tickets.update({
+            where: {ticketId},
+            data
         });
     }
 }

@@ -13,7 +13,7 @@ import {
 import {type AuthUser} from '@/types';
 import {ApiResponse} from '@/common';
 import {CurrentUser} from '@/common/decorators/current-user.decorator';
-import {UpdateOrgTicketUseCase} from './use-case/update-org-ticket';
+import {UpdateOrgTicketUseCase} from './use-case/update-org-ticket.use-case';
 import {FilterTicketsRequestQueryDto} from './dto/get-tickets-filter.dto';
 import {
     ApiBearerAuth,

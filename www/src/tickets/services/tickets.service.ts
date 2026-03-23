@@ -76,6 +76,7 @@ export class TicketsService {
         data: UpdateOrgTicketRequestDto,
         ticketTypeId: number,
         orgId: number,
+        userExtId: string,
         tx?: Prisma.TransactionClient
     ): Promise<Tickets> {
         const newTicket = await this.ticketsRepository.create(
@@ -85,7 +86,9 @@ export class TicketsService {
                 typeId: ticketTypeId,
                 requestedData: data.data,
                 reason: data.reason,
-                status: RequestStatus.Pending
+                status: RequestStatus.Pending,
+                email: data.email,
+                userExtId
             },
             tx
         );
@@ -130,5 +133,18 @@ export class TicketsService {
             type_name: ticket.type.name,
             created_at: ticket.createdAt
         }));
+    }
+
+    public async updateStatus(
+        ticketId: string,
+        status: RequestStatus,
+        tx?: Prisma.TransactionClient
+    ): Promise<void> {
+        const ticket = await this.ticketsRepository.update(ticketId, {status}, tx);
+        if (!ticket) {
+            throw new NotFoundException(ApiErrors.TICKET_ERROR_UPDATE);
+        }
+
+        return;
     }
 }

@@ -5,5 +5,9 @@ export const BULL_BOARD_FEATURES = [
     BullBoardModule.forFeature({
         name: 'licenses',
         adapter: BullMQAdapter
+    }),
+    BullBoardModule.forFeature({
+        name: 'update-org',
+        adapter: BullMQAdapter
     })
 ];

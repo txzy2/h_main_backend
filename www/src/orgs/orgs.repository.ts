@@ -3,7 +3,7 @@ import {Injectable} from '@nestjs/common';
 import {Activity, Organization, Prisma} from '@prisma/client';
 import {AppLoggerService} from '@/common/logger/logger.service';
 
-import {CreateOrgDto, OrgResponseDto} from './dto';
+import {CreateOrgDto, OrgResponseDto, UpdateOrgDto} from './dto';
 
 export const ORGS_REPOSITORY = Symbol('ORGS_REPOSITORY');
 
@@ -14,6 +14,7 @@ export interface OrgsRepositoryInterface {
     checkExistByParams(param: Prisma.OrganizationWhereInput): Promise<Organization | null>;
 
     create(org: CreateOrgDto, hash: string, tx?: Prisma.TransactionClient): Promise<Organization>;
+    update(org: UpdateOrgDto, tx?: Prisma.TransactionClient): Promise<Organization>;
 }
 
 @Injectable()
@@ -85,6 +86,27 @@ export class OrgsRepository implements OrgsRepositoryInterface {
         );
 
         return createdOrg;
+    }
+
+    /**
+     * Обновление организации
+     *
+     * @param {UpdateOrgDto} org - Информация для обновления организации
+     * @param {Prisma.TransactionClient} tx? - Транзакция для выполнения запроса в рамках транзакции
+     *
+     * @returns {Promise<Organization>} Обновленная организация
+     */
+    public async update(org: UpdateOrgDto, tx?: Prisma.TransactionClient): Promise<Organization> {
+        const client = tx ?? this.prisma;
+        return await client.organization.update({
+            where: {
+                uniqueHash: org.hash
+            },
+            data: {
+                ...org.update_data,
+                updatedAt: new Date()
+            }
+        });
     }
 
     /**

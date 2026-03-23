@@ -10,7 +10,7 @@ export class CreateOrgDto {
     })
     @IsString()
     @IsNotEmpty()
-    name: string;
+    name!: string;
 
     @ApiProperty({
         name: 'inn',
@@ -19,7 +19,7 @@ export class CreateOrgDto {
     })
     @IsString()
     @IsNotEmpty()
-    inn: string;
+    inn!: string;
 
     @ApiProperty({
         name: 'kpp',
@@ -28,7 +28,7 @@ export class CreateOrgDto {
     })
     @IsString()
     @IsNotEmpty()
-    kpp: string;
+    kpp!: string;
 
     @ApiProperty({
         name: 'director',
@@ -37,7 +37,7 @@ export class CreateOrgDto {
     })
     @IsString()
     @IsNotEmpty()
-    director: string;
+    director!: string;
 
     @ApiProperty({
         name: 'phone_number',
@@ -47,7 +47,7 @@ export class CreateOrgDto {
     @IsNumberString()
     @IsNotEmpty()
     @IsPhoneNumber('RU')
-    phone_number: string;
+    phone_number!: string;
 
     @ApiProperty({
         name: 'plan',
@@ -56,5 +56,5 @@ export class CreateOrgDto {
     })
     @IsEnum(PlanTier)
     @IsNotEmpty()
-    plan: string;
+    plan!: string;
 }
