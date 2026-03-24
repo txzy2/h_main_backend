@@ -119,7 +119,6 @@ export class TicketsService {
         }
 
         const tickets = await this.ticketsRepository.findWithLimits(data, orgId);
-        this.logger.debugWithMeta('repo response', {tickets});
         if (!tickets.length) {
             throw new NotFoundException(ApiErrors.TICKET_NOT_FOUND);
         }
@@ -135,12 +134,24 @@ export class TicketsService {
         }));
     }
 
-    public async updateStatus(
+    /**
+     * Обновление заявки
+     *
+     * @param {string} ticketId - ID заявки
+     * @param {Prisma.TicketsUpdateInput} params - Данные для обновления заявки
+     * @param {Prisma.TransactionClient} [tx] - Клиент транзакции (опционально)
+     *
+     * @returns {Promise<void>} Обновленная заявка
+     *
+     * @throws {NotFoundException} Если заявка не найдена
+     */
+    public async updateTicket(
         ticketId: string,
-        status: RequestStatus,
+        params: Prisma.TicketsUpdateInput,
         tx?: Prisma.TransactionClient
     ): Promise<void> {
-        const ticket = await this.ticketsRepository.update(ticketId, {status}, tx);
+        const ticket = await this.ticketsRepository.update(ticketId, params, tx);
+
         if (!ticket) {
             throw new NotFoundException(ApiErrors.TICKET_ERROR_UPDATE);
         }

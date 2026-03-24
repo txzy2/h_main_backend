@@ -7,8 +7,7 @@ import {AppLoggerService} from '@/common/logger/logger.service';
 import {RequestStatus} from '@prisma/client';
 import {InjectQueue} from '@nestjs/bullmq';
 import {Queue} from 'bullmq';
-import {CommonHttpService} from '@/common/http/http.service';
-import {ConfigService} from '@nestjs/config';
+import {AuthUser} from '@/types';
 
 @Injectable()
 export class UpdateOrgUseCase {
@@ -16,8 +15,6 @@ export class UpdateOrgUseCase {
         private readonly orgsService: OrgsService,
         private readonly ticketsService: TicketsService,
         private readonly logger: AppLoggerService,
-        private readonly httpService: CommonHttpService,
-        private readonly configService: ConfigService,
         @InjectQueue('update-org')
         private readonly updateOrgQueue: Queue
     ) {}
@@ -33,7 +30,7 @@ export class UpdateOrgUseCase {
      * @throws {NotFoundException} Если организация не найдена или неактивна
      * @throws {NotFoundException} Если заявка не найдена
      */
-    public async execute(dto: UpdateOrgDto): Promise<string> {
+    public async execute(dto: UpdateOrgDto, user: AuthUser): Promise<string> {
         // Проверяем существование организации
         const existOrg = await this.orgsService.ensureOrgExistsByHash(dto.hash);
         if (!existOrg) {
@@ -56,13 +53,14 @@ export class UpdateOrgUseCase {
 
         // Обновляем организацию
         await this.orgsService.updateOrgOrThrow(dto);
-        // Обновляем статус заявки
-        //TODO: Добавить кто проверил (reviewedByExtId)
-        await this.ticketsService.updateStatus(existTicket.ticketId, RequestStatus.Approved);
+        // Обновляем заявку
+        await this.ticketsService.updateTicket(existTicket.ticketId, {
+            status: RequestStatus.Approved,
+            reviewedByExtId: user.sub
+        });
 
-        //TODO: Сделать очередь на отправку уведомления на почту пользователя (Отправляем только админам организации)
         await this.updateOrgQueue.add('update-org', {
-            email: existTicket.email as string,
+            email: existTicket.email,
             updatedData: existTicket.requestedData,
             type: 'updateOrg'
         });

@@ -106,6 +106,6 @@ export class OrgsController {
         @CurrentUser() user: AuthUser
     ): Promise<ApiResponse> {
         this.logger.log(`Обновление организации от ${user.sub}`);
-        return ApiResponse.ok<string>(await this.updateOrgUseCase.execute(updateOrgDto));
+        return ApiResponse.ok<string>(await this.updateOrgUseCase.execute(updateOrgDto, user));
     }
 }
