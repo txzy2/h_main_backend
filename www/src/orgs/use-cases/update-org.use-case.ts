@@ -1,4 +1,5 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
+import {Injectable, NotFoundException, OnModuleInit} from '@nestjs/common';
+import {ModuleRef} from '@nestjs/core';
 import {OrgsService} from '../orgs.service';
 import {UpdateOrgDto} from '../dto';
 import {ApiErrors} from '@/common/errors/api-errors';
@@ -10,14 +11,20 @@ import {Queue} from 'bullmq';
 import {AuthUser} from '@/types';
 
 @Injectable()
-export class UpdateOrgUseCase {
+export class UpdateOrgUseCase implements OnModuleInit {
+    private ticketsService: TicketsService;
+
     public constructor(
         private readonly orgsService: OrgsService,
-        private readonly ticketsService: TicketsService,
         private readonly logger: AppLoggerService,
+        private readonly moduleRef: ModuleRef,
         @InjectQueue('update-org')
         private readonly updateOrgQueue: Queue
     ) {}
+
+    onModuleInit() {
+        this.ticketsService = this.moduleRef.get(TicketsService, {strict: false});
+    }
 
     /**
      * Выполнение use-case обновления организации

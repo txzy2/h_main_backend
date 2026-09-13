@@ -1,4 +1,4 @@
-import {forwardRef, Module} from '@nestjs/common';
+import {Module} from '@nestjs/common';
 import {
     TICKET_TYPES_REPOSITORY,
     TICKETS_REPOSITORY,
@@ -12,7 +12,7 @@ import {OrgsModule} from '@/orgs/orgs.module';
 import {PrismaModule} from '@/prisma/prisma.module';
 
 @Module({
-    imports: [forwardRef(() => OrgsModule), PrismaModule],
+    imports: [OrgsModule, PrismaModule],
     controllers: [TicketsController],
     providers: [
         TicketsService,

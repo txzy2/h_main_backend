@@ -42,9 +42,6 @@ export class OrgsService {
     public async getActiveOrg(orgId: number): Promise<OrgResponseDto> {
         const orgData = await this.orgsRepository.findOrgInfoById(orgId);
         if (!orgData || orgData.status !== Activity.Active) {
-            if (orgData?.status === Activity.Pending) {
-                throw new ConflictException(ApiErrors.ORG_STATUS_IS_PENDING);
-            }
             throw new ConflictException(ApiErrors.ORG_NOT_FOUND_OR_INACTIVE);
         }
 
@@ -140,7 +137,7 @@ export class OrgsService {
      * @returns {Promise<Organization>}
      * @throws {ConflictException}
      */
-    private async getOrgByParamsOrThrow(
+    public async getOrgByParamsOrThrow(
         params: Prisma.OrganizationWhereInput
     ): Promise<Organization> {
         const org = await this.orgsRepository.checkExistByParams(params);

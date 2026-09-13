@@ -1,8 +1,9 @@
 import {LicenseWithOrg} from '@/types';
-import {Inject, Injectable} from '@nestjs/common';
+import {Inject, Injectable, NotFoundException} from '@nestjs/common';
 import {Prisma} from '@prisma/client';
 import {LICENSES_REPOSITORY, type LicensesRepositoryInterface} from './licenses.repository';
 import {AppLoggerService} from '@/common/logger/logger.service';
+import {ApiErrors} from '@/common/errors/api-errors';
 
 @Injectable()
 export class LicensesService {
@@ -24,6 +25,21 @@ export class LicensesService {
         const licenses = await this.licensesRepository.findExpiringLicenses();
         this.logger.debug(`Expiring licenses found: count=${licenses.length}`);
         return licenses;
+    }
+
+    /**
+     * getLicenseByOrg - Поиск лицензии по организации
+     *
+     * @param orgId
+     * @returns
+     */
+    public async getLicenseByOrg(orgId: number): Promise<LicenseWithOrg> {
+        const license = await this.licensesRepository.getLicense(orgId);
+        if (!license) {
+            throw new NotFoundException(ApiErrors.ORG_NOT_FOUND_OR_INACTIVE);
+        }
+
+        return license;
     }
 
     /**

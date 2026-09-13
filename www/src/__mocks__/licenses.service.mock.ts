@@ -2,5 +2,6 @@ import {LicensesService} from '@/licenses/licenses.service';
 
 export const mockLicensesService: jest.Mocked<LicensesService> = {
     registrateLicense: jest.fn(),
-    getExpiringLicenses: jest.fn()
+    getExpiringLicenses: jest.fn(),
+    getLicense: jest.fn()
 } as any;

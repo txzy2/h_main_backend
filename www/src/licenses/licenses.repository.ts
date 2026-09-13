@@ -10,6 +10,7 @@ export const LICENSES_REPOSITORY = Symbol('LICENSES_REPOSITORY');
 export interface LicensesRepositoryInterface {
     findExpiringLicenses(): Promise<LicenseWithOrg[]>;
     register(orgId: number, planId: number, tx?: Prisma.TransactionClient): Promise<boolean>;
+    getLicense(orgId: number): Promise<LicenseWithOrg | null>;
 }
 
 @Injectable()
@@ -55,5 +56,9 @@ export class LicensesRepository implements LicensesRepositoryInterface {
                 expiredAt: new Date(Date.now() + BUSINESS_LIMITS.CREATE_LICENSE_EXPARATION_DAYS)
             }
         }));
+    }
+
+    public async getLicense(orgId: number): Promise<LicenseWithOrg | null> {
+        return this.prisma.license.findFirst({where: {orgId: orgId}, include: {org: true}});
     }
 }

@@ -16,6 +16,7 @@ import {Roles} from '@/common/decorators/roles.decorator';
 import {USER_ROLES} from '@/common/constants/roles.constants';
 import {RolesGuard} from '@/guards/roles.guard';
 import {UpdateOrgUseCase} from './use-cases/update-org.use-case';
+import {OrgActivityGuard} from '@/guards/org_activity.guard';
 
 @ApiTags('Организации')
 @ApiBearerAuth('JWT-auth')
@@ -78,7 +79,7 @@ export class OrgsController {
     @SwaggerResponse({status: 409, description: ApiErrors.ORG_NOT_FOUND_OR_INACTIVE})
     @Get()
     @HttpCode(HttpStatus.OK)
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, OrgActivityGuard)
     public async get(@CurrentUser() user: AuthUser): Promise<ApiResponse> {
         this.logger.log(`Попытка получить организацию от ${user.sub}`);
         return ApiResponse.ok<OrgResponseDto>(await this.orgsService.getOrgInfo(user));
