@@ -46,7 +46,7 @@ export class LocationsService {
             throw new ConflictException(ApiErrors.USER_NOT_FOUND);
         }
 
-        await this.orgService.getActiveOrg(data.org_id);
+        // await this.orgService.getActiveOrg(data.org_id);
 
         try {
             const mapped = data.locations.map(loc => ({

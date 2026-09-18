@@ -41,6 +41,63 @@ services:
     networks:
       - h_back_net
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ${PROJECT_NAME}_prometheus
+    restart: always
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./dev_data/prometheus:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - h_back_net
+
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: ${PROJECT_NAME}_postgres_exporter
+    restart: always
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${DB_USER}:${DB_PASS}@h_main_db:5432/${DB_NAME}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      h_main_db:
+        condition: service_healthy
+    networks:
+      - h_back_net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ${PROJECT_NAME}_grafana
+    restart: always
+    volumes:
+      - ./dev_data/grafana:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+    networks:
+      - h_back_net
+
+  loki:
+    image: grafana/loki:latest
+    container_name: ${PROJECT_NAME}_loki
+    restart: always
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./dev_data/loki:/loki
+      - ./monitoring/loki/config.yml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - h_back_net
+
 networks:
   h_back_net:
     driver: bridge

@@ -1,5 +1,6 @@
 import {Injectable, LoggerService, Scope} from '@nestjs/common';
 import * as winston from 'winston';
+import LokiTransport from 'winston-loki';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -34,6 +35,19 @@ export class AppLoggerService implements LoggerService {
     constructor() {
         this.ensureLogDirs();
 
+        const transports: winston.transport[] = [
+            this.consoleTransport(),
+            this.fileTransport('debug'),
+            this.fileTransport('info'),
+            this.fileTransport('warn'),
+            this.fileTransport('error')
+        ];
+
+        // Отправка логов в Loki (только если задан LOKI_HOST — dev-окружение)
+        if (process.env.LOKI_HOST) {
+            transports.push(this.lokiTransport());
+        }
+
         this.logger = winston.createLogger({
             level: 'debug',
             format: winston.format.combine(
@@ -49,13 +63,7 @@ export class AppLoggerService implements LoggerService {
                         : base;
                 })
             ),
-            transports: [
-                this.consoleTransport(),
-                this.fileTransport('debug'),
-                this.fileTransport('info'),
-                this.fileTransport('warn'),
-                this.fileTransport('error')
-            ]
+            transports
         });
     }
 
@@ -130,6 +138,21 @@ export class AppLoggerService implements LoggerService {
                         : base;
                 })
             )
+        });
+    }
+
+    private lokiTransport() {
+        return new LokiTransport({
+            host: process.env.LOKI_HOST as string,
+            labels: {app: process.env.PROJECT_NAME ?? 'h_main_backend'},
+            json: true,
+            batching: true,
+            interval: 5,
+            replaceTimestamp: true,
+            onConnectionError: () => {
+                // Loki может быть недоступен (например, не поднят docker compose) —
+                // логи всё равно пишутся в консоль и файлы
+            }
         });
     }
 }

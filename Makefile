@@ -2,7 +2,7 @@ include .env
 
 COMPOSE_DEV = docker compose -f docker-compose.dev.yml
 
-.PHONY: ps-dev build-dev down-dev up-dev up-app-dev dbr-dev init-dev clean-project reset-dev migrate-dev seed-db-dev test-dev
+.PHONY: ps-dev build-dev down-dev up-dev up-app-dev dbr-dev init-dev init-monitoring clean-project reset-dev migrate-dev seed-db-dev test-dev
 
 ps-dev:
 	$(COMPOSE_DEV) ps
@@ -13,14 +13,17 @@ build-dev:
 down-dev:
 	$(COMPOSE_DEV) down
 
-up-dev:
+up-dev: init-monitoring
 	$(COMPOSE_DEV) up -d
 
 up-app-dev:
 	cd www && bun run start:dev
 
-dbr-dev: down-dev
+dbr-dev: down-dev init-monitoring
 	$(COMPOSE_DEV) up -d --build
+
+init-monitoring:
+	@bash monitoring/init.sh
 
 migrate-dev:
 	cd www && npx prisma migrate dev
@@ -41,6 +44,7 @@ init-dev:
 	@echo "Building..."
 	@$(MAKE) build-dev
 	docker network create $(PROJECT_NAME)_net || true
+	@$(MAKE) init-monitoring
 	@echo "Starting services..."
 	$(COMPOSE_DEV) up -d --wait
 	@echo "Services ready!"

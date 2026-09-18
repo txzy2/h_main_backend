@@ -1,4 +1,5 @@
 dbdata/
 redis_data/
+dev_data/
 
 .env
