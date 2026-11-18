@@ -19,7 +19,11 @@ export interface LocationsRepositoryInterface {
         tx?: Prisma.TransactionClient
     ): Promise<Location>;
 
-    createManyLocations(data: (ReqLocation & {uniqueHash: string})[], orgId: number): Promise<void>;
+    createManyLocations(
+        data: (ReqLocation & {uniqueHash: string})[],
+        orgId: number,
+        tx?: Prisma.TransactionClient
+    ): Promise<void>;
 }
 
 @Injectable()

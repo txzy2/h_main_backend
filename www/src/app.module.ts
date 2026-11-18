@@ -24,6 +24,7 @@ import {TicketsModule} from './tickets/tickets.module';
 import {FastifyAdapter} from '@bull-board/fastify';
 import {OrgsJobModule} from './jobs/orgs/orgs.job.module';
 import {BookingsModule} from './bookings/bookings.module';
+import {DashboardModule} from './dashboard/dashboard.module';
 
 @Module({
     imports: [
@@ -62,7 +63,8 @@ import {BookingsModule} from './bookings/bookings.module';
         ScheduleModule.forRoot(),
         UserModule,
         LocationsModule,
-        BookingsModule
+        BookingsModule,
+        DashboardModule
     ],
     controllers: [AppController],
     providers: [AppService]

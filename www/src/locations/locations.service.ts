@@ -9,6 +9,7 @@ import {AuthUser} from '@/types';
 import {getErrorMessage} from '@/common/errors/get-error-message';
 
 import * as crypto from 'crypto';
+import {PrismaService} from '@/prisma/prisma.service';
 
 @Injectable()
 export class LocationsService {
@@ -17,6 +18,7 @@ export class LocationsService {
         private readonly locationsRepository: LocationsRepositoryInterface,
         private readonly userService: UserService,
         private readonly orgService: OrgsService,
+        private readonly prisma: PrismaService,
         private readonly logger: AppLoggerService
     ) {
         this.logger.setContext(LocationsService.name);
@@ -54,7 +56,9 @@ export class LocationsService {
                 uniqueHash: this.generateUniqueLocationHash(data.org_id, loc)
             }));
 
-            await this.locationsRepository.createManyLocations(mapped, data.org_id);
+            return await this.prisma.$transaction(async tx => {
+                await this.locationsRepository.createManyLocations(mapped, data.org_id, tx);
+            });
         } catch (e: unknown) {
             this.logger.error('Failed to create locations', getErrorMessage(e));
             throw new InternalServerErrorException(ApiErrors.INTERNAL_SERVER_ERROR);

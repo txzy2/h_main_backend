@@ -18,6 +18,7 @@ export const mockCreateUser: User = {
     name: 'Anton',
     login: 'txzy23',
     phoneNumber: '89177001742',
+    position: null,
     orgId: 1,
     createdAt: new Date(),
     updatedAt: new Date()

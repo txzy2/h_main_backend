@@ -21,6 +21,14 @@ enum BookingStatus {
   Completed
 }
 
+enum BookingActionType {
+  Created
+  Started
+  Extended
+  Closed
+  Cancelled
+}
+
 enum RequestStatus {
   Pending
   InProgress
@@ -34,7 +42,8 @@ model User {
   login String @unique
   name  String
 
-  phoneNumber String @map("phone") @db.VarChar(11)
+  phoneNumber String  @map("phone") @db.VarChar(11)
+  position    String? @db.VarChar(100)
 
   extId String       @unique @map("ext_id") @db.VarChar(64)
   org   Organization @relation(fields: [orgId], references: [id])
@@ -43,6 +52,7 @@ model User {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @map("updated_at")
   tickets   Tickets[]
+  shifts    Shift[]
 
   @@index([orgId])
   @@map("users")
@@ -67,6 +77,7 @@ model Organization {
   locations Location[]
   users     User[]
   tickets   Tickets[]
+  shifts    Shift[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -92,7 +103,8 @@ model Location {
 
   status Activity
 
-  bookings Booking[]
+  bookings       Booking[]
+  locationTables LocationTables[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -107,11 +119,27 @@ model Booking {
   location   Location @relation(fields: [locationId], references: [id])
   locationId Int      @map("location_id")
 
-  userExtId   String        @map("user_ext_id") @db.VarChar(64)
-  guestsCount Int           @map("guests_count")
-  status      BookingStatus
-  scheduledAt DateTime      @map("scheduled_at")
-  comment     String?       @db.VarChar(255)
+  table   LocationTables? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  tableId Int?            @map("table_id")
+
+  userExtId       String        @map("user_ext_id") @db.VarChar(64)
+  guestName       String?       @map("guest_name") @db.VarChar(255)
+  guestPhone      String?       @map("guest_phone") @db.VarChar(20)
+  guestsCount     Int           @map("guests_count")
+  status          BookingStatus
+  scheduledAt     DateTime      @map("scheduled_at")
+  // Плановая длительность брони в минутах (можно продлевать)
+  durationMinutes Int           @default(120) @map("duration_minutes")
+  seatedAt        DateTime?     @map("seated_at")
+  completedAt     DateTime?     @map("completed_at")
+
+  // Сумма чека и оценка гостя — для аналитики дашборда
+  amount Int  @default(0)
+  rating Int?
+
+  comment String? @db.VarChar(255)
+
+  actions BookingAction[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -122,7 +150,73 @@ model Booking {
   @@index([userExtId])
   // status + scheduledAt — выборка pending/confirmed броней на сегодня/завтра
   @@index([status, scheduledAt])
+  @@index([tableId])
+  @@index([guestPhone])
+  @@index([scheduledAt])
   @@map("bookings")
+}
+
+model LocationTables {
+  id Int @id @default(autoincrement())
+
+  location   Location @relation(fields: [locationId], references: [id])
+  locationId Int      @map("location_id")
+
+  name String? @default("") @db.VarChar(255)
+
+  bookings Booking[]
+
+  //TODO: Если понадобится сделать тип (VIP или нет -> надо будет скороее всего добавить таблицу, чтобы держать типы)
+  // Через enum не подойдет, чтобы клиент мог кастомить типы и названия
+
+  @@map("location_tables")
+}
+
+/// История действий по брони: создание, продление, закрытие, отмена.
+model BookingAction {
+  id Int @id @default(autoincrement())
+
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId Int     @map("booking_id")
+
+  type BookingActionType
+
+  userExtId String @map("user_ext_id") @db.VarChar(64)
+
+  minutes Int?
+  amount  Int?
+  comment String? @db.VarChar(500)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([bookingId, createdAt])
+  @@map("booking_actions")
+}
+
+model Shift {
+  id Int @id @default(autoincrement())
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @map("user_id")
+
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId Int          @map("org_id")
+
+  startsAt     DateTime  @map("starts_at")
+  endsAt       DateTime? @map("ends_at")
+  bookingsGoal Int       @default(0) @map("bookings_goal")
+
+  // Фактическая явка менеджера: когда нажал «Выйти на смену» / «Закончить смену»
+  actualStartedAt DateTime? @map("actual_started_at")
+  actualEndedAt   DateTime? @map("actual_ended_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId, actualStartedAt])
+  @@index([orgId, startsAt])
+  @@index([userId, startsAt])
+  @@map("shifts")
 }
 
 model License {
