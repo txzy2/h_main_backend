@@ -40,6 +40,29 @@ export const ApiErrors = {
     LOCATION_IS_ALREADY_EXIST: (name: string) => `Точка "${name}" уже зарегистрирована`,
 
     // ===========================
+    // Брони
+    // ===========================
+
+    INVALID_BOOKING_TIMESTAMP: 'Неверное время создания брони',
+    BOOKING_TIME_IN_PAST: 'Нельзя создать бронь в прошлом',
+    BOOKING_LOCATION_NOT_FOUND: 'Точка не найдена или неактивна',
+    BOOKING_TABLE_NOT_FOUND: 'Стол не найден для выбранной точки',
+    BOOKING_TABLE_BUSY: 'Выбранный стол занят на это время',
+    BOOKING_NO_FREE_TABLE: 'На выбранное время нет свободных столов',
+    BOOKING_NOT_FOUND: 'Бронь не найдена',
+    BOOKING_NOT_OWNED: 'Управлять можно только своей бронью',
+    BOOKING_ALREADY_CLOSED: 'Бронь уже закрыта',
+    BOOKING_ALREADY_CANCELLED: 'Бронь уже отменена',
+    BOOKING_ALREADY_STARTED: 'Визит уже начат',
+    BOOKING_EXTEND_LIMIT: 'Нельзя продлить бронь более чем на 12 часов',
+
+    // ===========================
+    // Смены
+    // ===========================
+
+    SHIFT_NOT_STARTED: 'Смена не начата',
+
+    // ===========================
     // Тикеты
     // ===========================
 
@@ -47,7 +70,7 @@ export const ApiErrors = {
     TICKET_TYPE_NOT_FOUND: 'Тип заявки не найден',
     TICKET_ALREADY_EXIST: 'Тикет уже существует. Ожидайте',
     TICKET_ERROR_CREATE: 'Ошибка создания заявки',
-    TICKET_ERROR_UPDATE: 'Ошибка обновления заявки',
+    TICKET_ERROR_UPDATE: 'Ошибка обновления заявки'
 } as const;
 
 export type ApiErrors = Extract<(typeof ApiErrors)[keyof typeof ApiErrors], string>;

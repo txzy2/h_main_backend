@@ -26,7 +26,7 @@ init-monitoring:
 	@bash monitoring/init.sh
 
 migrate-dev:
-	cd www && npx prisma migrate dev
+	cd www && bunx prisma migrate dev
 
 seed-db-dev:
 	cd www && bun run seed

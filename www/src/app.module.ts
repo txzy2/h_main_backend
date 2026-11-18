@@ -23,6 +23,8 @@ import {LocationsModule} from './locations/locations.module';
 import {TicketsModule} from './tickets/tickets.module';
 import {FastifyAdapter} from '@bull-board/fastify';
 import {OrgsJobModule} from './jobs/orgs/orgs.job.module';
+import {BookingsModule} from './bookings/bookings.module';
+import {DashboardModule} from './dashboard/dashboard.module';
 
 @Module({
     imports: [
@@ -60,7 +62,9 @@ import {OrgsJobModule} from './jobs/orgs/orgs.job.module';
         ...BULL_BOARD_FEATURES,
         ScheduleModule.forRoot(),
         UserModule,
-        LocationsModule
+        LocationsModule,
+        BookingsModule,
+        DashboardModule
     ],
     controllers: [AppController],
     providers: [AppService]

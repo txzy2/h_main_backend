@@ -31,6 +31,7 @@ export class CreateOrgUseCase {
 
         try {
             return await this.prisma.$transaction(async tx => {
+                //TODO: Надо подумать (надо ли переносить в сервис, чтобы убрать зависимость от репозитория орг)
                 const org = await this.orgsRepository.create(
                     dto,
                     this.orgService.generateOrgHashData({

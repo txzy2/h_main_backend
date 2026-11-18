@@ -44,6 +44,7 @@ export class LocationsController {
         @Body() locations: CreateLocationDto
     ): Promise<ApiResponse> {
         this.logger.log(`Add Locations request by ${user.sub}`);
+        //TODO: Сделать передачу кол-ва столиков у точки
         await this.locationsService.addLocationForOrg(locations, user);
         return ApiResponse.ok<string>('Точки добавлены');
     }
