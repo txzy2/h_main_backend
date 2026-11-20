@@ -19,6 +19,7 @@ import {
     RevenuePeriodKey
 } from './dashboard.constants';
 import {DASHBOARD_REPOSITORY, type DashboardRepositoryInterface} from './dashboard.repository';
+import {TeamQueryDto} from './dto/team-query.dto';
 import {
     BookingBoardItem,
     BookingsBoard,
@@ -39,7 +40,10 @@ import {
     ShiftBooking,
     ShiftBookingStatus,
     ShiftStaff,
-    ShiftStaffStatus
+    ShiftStaffStatus,
+    TeamResponse,
+    TeamRow,
+    TeamSortKey
 } from './dashboard.types';
 import {
     addDays,
@@ -186,6 +190,100 @@ export class DashboardService {
             employees: isAdmin
                 ? this.buildEmployeeBookingStats(users, bookings, completedToday)
                 : []
+        };
+    }
+
+    public async getTeam(user: AuthUser, query: TeamQueryDto): Promise<TeamResponse> {
+        const {org} = await this.getContext(user);
+        const now = new Date();
+        const startToday = startOfZonedDay(now);
+        const endToday = addDays(startToday, 1);
+        const monthStart = startOfZonedMonth(now);
+
+        const [teamUsers, bookings, completed, shifts] = await Promise.all([
+            this.repository.findTeamUsers(org.id),
+            this.repository.findBookings(org.id, monthStart, endToday),
+            this.repository.findCompleted(org.id, monthStart, endToday),
+            this.repository.findShifts(org.id, startToday, endToday)
+        ]);
+
+        const activeBookings = this.active(bookings);
+        const revenueBookings = this.revenue(completed);
+        const cancellationBookings = bookings.filter(
+            booking => booking.status === BookingStatus.Cancelled
+        );
+
+        const rows: TeamRow[] = teamUsers.map(teamUser => {
+            const userBookings = activeBookings.filter(
+                booking => booking.userExtId === teamUser.extId
+            );
+            const userRevenueBookings = revenueBookings.filter(
+                booking => booking.userExtId === teamUser.extId
+            );
+            const revenue = this.sumAmount(userRevenueBookings);
+            const activeShift = shifts.find(
+                shift =>
+                    shift.userExtId === teamUser.extId &&
+                    shift.actualStartedAt &&
+                    !shift.actualEndedAt
+            );
+
+            return {
+                id: teamUser.extId,
+                name: teamUser.name,
+                login: teamUser.login,
+                phone: teamUser.phone,
+                position: teamUser.position ?? 'Сотрудник',
+                bookings: userBookings.length,
+                guests: this.sumGuests(userBookings),
+                revenue,
+                averageCheck: this.averageCheck(revenue, userRevenueBookings.length),
+                cancellations: cancellationBookings.filter(
+                    booking => booking.userExtId === teamUser.extId
+                ).length,
+                isOnShift: Boolean(activeShift),
+                shiftStartedAt: activeShift?.actualStartedAt?.toISOString() ?? null,
+                createdAt: teamUser.createdAt.toISOString()
+            };
+        });
+
+        const search = query.search?.trim().toLowerCase();
+        const filtered = search
+            ? rows.filter(row =>
+                  [row.name, row.login, row.phone, row.position].some(value =>
+                      value.toLowerCase().includes(search)
+                  )
+              )
+            : rows;
+
+        const sort = query.sort ?? 'name';
+        const order = query.order ?? 'asc';
+        const sorted = filtered
+            .slice()
+            .sort((left, right) => this.compareTeamRows(left, right, sort, order));
+
+        const pageSize = Math.min(100, Math.max(1, query.pageSize ?? 10));
+        const total = sorted.length;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        const page = Math.min(Math.max(1, query.page ?? 1), totalPages);
+        const items = sorted.slice((page - 1) * pageSize, page * pageSize);
+
+        return {
+            generatedAt: now.toISOString(),
+            period: {from: monthStart.toISOString(), to: endToday.toISOString()},
+            summary: {
+                employees: rows.length,
+                onShift: rows.filter(row => row.isOnShift).length,
+                bookings: rows.reduce((sum, row) => sum + row.bookings, 0),
+                revenue: rows.reduce((sum, row) => sum + row.revenue, 0)
+            },
+            items,
+            total,
+            page,
+            pageSize,
+            totalPages,
+            sort,
+            order
         };
     }
 
@@ -1188,6 +1286,29 @@ export class DashboardService {
 
     private averageCheck(revenue: number, bookingsCount: number): number {
         return bookingsCount ? Math.round(revenue / bookingsCount) : 0;
+    }
+
+    private compareTeamRows(
+        left: TeamRow,
+        right: TeamRow,
+        key: TeamSortKey,
+        order: 'asc' | 'desc'
+    ): number {
+        let difference = 0;
+
+        if (key === 'name' || key === 'position') {
+            difference = left[key].localeCompare(right[key], 'ru');
+        } else if (key === 'shift') {
+            difference = Number(left.isOnShift) - Number(right.isOnShift);
+        } else {
+            difference = left[key] - right[key];
+        }
+
+        if (difference === 0) {
+            return left.name.localeCompare(right.name, 'ru');
+        }
+
+        return difference * (order === 'asc' ? 1 : -1);
     }
 
     private trend(current: number, previous: number): number {

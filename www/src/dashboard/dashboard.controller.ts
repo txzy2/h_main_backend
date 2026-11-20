@@ -14,9 +14,11 @@ import {
     BookingsBoard,
     DashboardSummary,
     ManagerShiftSummary,
-    RevenuePeriod
+    RevenuePeriod,
+    TeamResponse
 } from './dashboard.types';
 import {RevenueQueryDto} from './dto/revenue-query.dto';
+import {TeamQueryDto} from './dto/team-query.dto';
 
 @ApiTags('Дашборд')
 @ApiBearerAuth('JWT-auth')
@@ -69,6 +71,27 @@ export class DashboardController {
     public async getBookings(@CurrentUser() user: AuthUser): Promise<ApiResponse> {
         return ApiResponse.ok<BookingsBoard>(
             await this.dashboardService.getBookingsBoard(user)
+        );
+    }
+
+    @ApiOperation({
+        summary: 'Команда организации',
+        description:
+            'Сотрудники с показателями за текущий месяц, поиском, сортировкой и пагинацией'
+    })
+    @SwaggerResponse({status: 200, description: 'Список сотрудников'})
+    @SwaggerResponse({status: 401, description: 'Токен недействителен или истёк'})
+    @SwaggerResponse({status: 403, description: 'Доступно администраторам'})
+    @Get('team')
+    @HttpCode(HttpStatus.OK)
+    @Roles(USER_ROLES.ADMIN, USER_ROLES.SUPER_USER)
+    @UseGuards(AuthGuard, RolesGuard)
+    public async getTeam(
+        @CurrentUser() user: AuthUser,
+        @Query() query: TeamQueryDto
+    ): Promise<ApiResponse> {
+        return ApiResponse.ok<TeamResponse>(
+            await this.dashboardService.getTeam(user, query)
         );
     }
 

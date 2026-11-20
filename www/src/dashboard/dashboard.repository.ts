@@ -6,7 +6,8 @@ import {
     DashboardBooking,
     DashboardLocation,
     DashboardShift,
-    DashboardUser
+    DashboardUser,
+    TeamUser
 } from './dashboard.types';
 
 export const DASHBOARD_REPOSITORY = Symbol('DASHBOARD_REPOSITORY');
@@ -62,6 +63,8 @@ export interface DashboardRepositoryInterface {
     findLocations(orgId: number): Promise<DashboardLocation[]>;
 
     findUsers(orgId: number): Promise<DashboardUser[]>;
+
+    findTeamUsers(orgId: number): Promise<TeamUser[]>;
 
     findShifts(orgId: number, from: Date, to: Date): Promise<DashboardShift[]>;
 
@@ -186,6 +189,32 @@ export class DashboardRepository implements DashboardRepositoryInterface {
             select: {extId: true, name: true, position: true},
             orderBy: {id: 'asc'}
         });
+    }
+
+    public async findTeamUsers(orgId: number): Promise<TeamUser[]> {
+        const users = await this.prisma.user.findMany({
+            where: {orgId},
+            select: {
+                id: true,
+                extId: true,
+                login: true,
+                name: true,
+                phoneNumber: true,
+                position: true,
+                createdAt: true
+            },
+            orderBy: {name: 'asc'}
+        });
+
+        return users.map(user => ({
+            id: user.id,
+            extId: user.extId,
+            login: user.login,
+            name: user.name,
+            phone: user.phoneNumber,
+            position: user.position,
+            createdAt: user.createdAt
+        }));
     }
 
     public async findShifts(orgId: number, from: Date, to: Date): Promise<DashboardShift[]> {
